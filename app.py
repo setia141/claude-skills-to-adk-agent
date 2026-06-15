@@ -24,6 +24,9 @@ import venv as _venv_mod
 import zipfile
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()  # loads .env from project root before anything else reads os.environ
+
 from flask import Flask, Response, jsonify, render_template, request, send_file, stream_with_context
 
 from agents import parse_skill, run_architect, run_generator, run_validator, run_test_generator, run_verifier, run_fixer

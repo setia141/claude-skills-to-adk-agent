@@ -25,7 +25,6 @@ from typing import Optional
 
 import chromadb
 from chromadb.utils import embedding_functions
-from openai import OpenAI
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +41,41 @@ TOP_K_PER_QUERY  = 4      # chunks retrieved per query (raised from 3)
 MAX_CHUNKS_TOTAL = 20     # max chunks injected into generator prompt (raised from 12)
 MAX_INJECT_CHARS = 50_000 # hard cap on total injected text (~12.5k tokens, raised from 14k)
 
-OPENAI_EMBED_MODEL = "text-embedding-3-small"
+# Default embedding model — overridden by EMBEDDING_MODEL env var
+_DEFAULT_EMBED_MODEL = "text-embedding-3-small"
+
+
+def _embedding_config() -> dict:
+    """
+    Read embedding gateway config from environment variables.
+
+    All three must be set (via .env or shell environment):
+      EMBEDDING_API_KEY   — API key for your internal gateway
+      EMBEDDING_BASE_URL  — gateway base URL, e.g. https://my-gateway.company.com/v1
+      EMBEDDING_MODEL     — embedding model name (e.g. text-embedding-3-small)
+    """
+    api_key  = os.environ.get("EMBEDDING_API_KEY")
+    base_url = os.environ.get("EMBEDDING_BASE_URL")
+    model    = os.environ.get("EMBEDDING_MODEL", _DEFAULT_EMBED_MODEL)
+
+    missing = [k for k, v in [("EMBEDDING_API_KEY", api_key), ("EMBEDDING_BASE_URL", base_url)] if not v]
+    if missing:
+        raise EnvironmentError(
+            f"Missing required env vars: {', '.join(missing)}\n"
+            "Set them in your .env file or shell environment."
+        )
+    return {"api_key": api_key, "base_url": base_url, "model": model}
+
+
+def _make_embedding_function(cfg: dict):
+    """Build a ChromaDB-compatible embedding function from gateway config."""
+    kwargs = {
+        "api_key":    cfg["api_key"],
+        "model_name": cfg["model"],
+    }
+    if cfg["base_url"]:
+        kwargs["api_base"] = cfg["base_url"]
+    return embedding_functions.OpenAIEmbeddingFunction(**kwargs)
 
 
 # ── Chunking ──────────────────────────────────────────────────────────────────
@@ -106,15 +139,12 @@ def _docs_hash(text: str) -> str:
 
 
 def _get_client_and_collection():
-    """Get ChromaDB client + collection using OpenAI embedding function."""
-    openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=os.environ["OPENAI_API_KEY"],
-        model_name=OPENAI_EMBED_MODEL,
-    )
+    """Get ChromaDB client + collection using the configured embedding function."""
+    ef     = _make_embedding_function(_embedding_config())
     client = chromadb.PersistentClient(path=str(CHROMA_DIR))
     collection = client.get_or_create_collection(
         name=COLLECTION_NAME,
-        embedding_function=openai_ef,
+        embedding_function=ef,
         metadata={"hnsw:space": "cosine"},
     )
     return client, collection
@@ -158,14 +188,9 @@ def build_index(force: bool = False) -> dict:
     if collection.count() > 0:
         log.info(f"[rag] Clearing {collection.count()} existing chunks…")
         client.delete_collection(COLLECTION_NAME)
-        from chromadb.utils import embedding_functions as _ef
-        openai_ef = _ef.OpenAIEmbeddingFunction(
-            api_key=os.environ["OPENAI_API_KEY"],
-            model_name=OPENAI_EMBED_MODEL,
-        )
         collection = client.create_collection(
             name=COLLECTION_NAME,
-            embedding_function=openai_ef,
+            embedding_function=_make_embedding_function(_embedding_config()),
             metadata={"hnsw:space": "cosine"},
         )
 
@@ -264,6 +289,7 @@ def index_status() -> dict:
             "docs_file_size_mb": round(DOCS_FILE.stat().st_size / 1e6, 1) if DOCS_FILE.exists() else 0,
         }
     try:
+        cfg = _embedding_config()
         _, collection = _get_client_and_collection()
         return {
             "indexed": True,
@@ -271,7 +297,8 @@ def index_status() -> dict:
             "docs_file_exists": DOCS_FILE.exists(),
             "docs_file_size_mb": round(DOCS_FILE.stat().st_size / 1e6, 1) if DOCS_FILE.exists() else 0,
             "collection": COLLECTION_NAME,
-            "embed_model": OPENAI_EMBED_MODEL,
+            "embed_model": cfg["model"],
+            "embed_base_url": cfg["base_url"] or "https://api.openai.com/v1 (default)",
         }
     except Exception as e:
         return {"indexed": False, "error": str(e)}
