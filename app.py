@@ -1191,5 +1191,5 @@ def cleanup_route(job_id):
 if __name__ == "__main__":
     app.run(debug=True, port=5000, threaded=True,
             extra_files=[],
-            exclude_patterns=["venv/*", "*.pyc", "__pycache__/*",
+            exclude_patterns=["venv/*", "__pycache__/*",
                               "adk_chroma_db/*", "sessions/*", "output/*"])
