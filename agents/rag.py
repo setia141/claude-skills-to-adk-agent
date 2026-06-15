@@ -184,15 +184,21 @@ def build_index(force: bool = False) -> dict:
 
     client, collection = _get_client_and_collection()
 
-    # Clear existing collection by deleting and recreating it
+    # Clear existing collection — delete it, then reinitialize the client so
+    # ChromaDB's internal state is fully flushed before we recreate the collection.
     if collection.count() > 0:
         log.info(f"[rag] Clearing {collection.count()} existing chunks…")
         client.delete_collection(COLLECTION_NAME)
-        collection = client.create_collection(
-            name=COLLECTION_NAME,
-            embedding_function=_make_embedding_function(_embedding_config()),
-            metadata={"hnsw:space": "cosine"},
-        )
+
+    # Fresh client after deletion — avoids "Collection already exists" error
+    # that occurs when the old client still caches the deleted collection.
+    ef     = _make_embedding_function(_embedding_config())
+    client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+    collection = client.get_or_create_collection(
+        name=COLLECTION_NAME,
+        embedding_function=ef,
+        metadata={"hnsw:space": "cosine"},
+    )
 
     # Batch embed + insert (100 chunks per batch to respect rate limits)
     BATCH = 100

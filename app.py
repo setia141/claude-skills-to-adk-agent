@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sys
@@ -22,12 +23,13 @@ import threading
 import uuid
 import venv as _venv_mod
 import zipfile
+from functools import wraps
 from pathlib import Path
 
 from dotenv import load_dotenv
 load_dotenv()  # loads .env from project root before anything else reads os.environ
 
-from flask import Flask, Response, jsonify, render_template, request, send_file, stream_with_context
+from flask import Flask, Response, jsonify, render_template, request, send_file, session, stream_with_context
 
 from agents import parse_skill, run_architect, run_generator, run_validator, run_test_generator, run_verifier, run_fixer
 from agents.rag import build_index, index_status
@@ -36,7 +38,88 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 JOBS: dict[str, dict] = {}
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+
+_SECRET_TOKEN = os.environ.get("SECRET_TOKEN", "")
+_AUTH_ENABLED = bool(_SECRET_TOKEN)
+
+_LOGIN_HTML = """<!doctype html>
+<html>
+<head>
+  <title>Sign in — Skill → ADK</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f1117; color: #e2e8f0; font-family: system-ui, sans-serif;
+           display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 12px;
+            padding: 40px; width: 360px; }
+    h2 { font-size: 1.2rem; margin-bottom: 24px; color: #a78bfa; }
+    label { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 6px; }
+    input { width: 100%; padding: 10px 12px; background: #0f1117; border: 1px solid #2d3148;
+            border-radius: 8px; color: #e2e8f0; font-size: 0.9rem; outline: none; }
+    input:focus { border-color: #7c3aed; }
+    button { margin-top: 20px; width: 100%; padding: 11px; background: #7c3aed;
+             border: none; border-radius: 8px; color: #fff; font-size: 0.95rem;
+             cursor: pointer; font-weight: 600; }
+    button:hover { background: #6d28d9; }
+    .error { margin-top: 14px; color: #f87171; font-size: 0.85rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Skill → ADK Platform</h2>
+    <form method="post">
+      <label>Access token</label>
+      <input type="password" name="token" placeholder="Enter your token" autofocus>
+      <button type="submit">Sign in</button>
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    </form>
+  </div>
+</body>
+</html>"""
+
+
+def _require_auth(f):
+    """Decorator: redirects to /login if auth is enabled and user is not signed in."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if _AUTH_ENABLED and not session.get("authenticated"):
+            from flask import redirect, url_for
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not _AUTH_ENABLED:
+        from flask import redirect
+        return redirect("/")
+    error = ""
+    if request.method == "POST":
+        token = request.form.get("token", "").strip()
+        if secrets.compare_digest(token, _SECRET_TOKEN):
+            session["authenticated"] = True
+            session.permanent = True
+            return __import__("flask").redirect("/")
+        error = "Invalid token — try again"
+    return render_template_string(_LOGIN_HTML, error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    from flask import redirect
+    return redirect("/login")
+
+
+def render_template_string(tmpl, **ctx):
+    """Minimal Jinja2 render without a file — used only for the login page."""
+    from jinja2 import Environment
+    return Environment().from_string(tmpl).render(**ctx)
 
 # Persistent session storage — survives server restarts
 SESSIONS_DIR = Path(__file__).parent / "sessions"
@@ -349,6 +432,7 @@ def _run_subprocess(cmd: list, cwd: Path):
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
+@_require_auth
 def index():
     return render_template("index.html", adks=SUPPORTED_ADKS)
 

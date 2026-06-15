@@ -20,7 +20,7 @@ loop validates and corrects the output before you download.
 | **Permission gates** | Every file write shown to user for approval before touching disk |
 | **Session persistence** | Resume after page refresh or server restart — localStorage + filesystem |
 | **Validator** | Generated code checked against ADR decisions; auto-fixed if mismatched |
-| **Sanity check** | `pip install` → `py_compile` → `import` test, with Claude auto-fix loop (3 attempts) |
+| **Sanity check** | Isolated sandbox venv → `pip install` → `py_compile` → `import` test, Claude auto-fix loop (7 attempts) |
 | **Smoke test** | Runs the generated agent end-to-end via ADK Runner with your credentials |
 | **Fix with Claude** | Paste any runtime error — Claude rewrites the affected file |
 | **Dockerfile** | `Dockerfile` + `.dockerignore` generated alongside agent code |
@@ -120,12 +120,13 @@ loop validates and corrects the output before you download.
 ║  ┌─────────────────────────────────────────────────────────────┐    ║
 ║  │  Sanity Check  (on demand, post-download)                   │    ║
 ║  │                                                             │    ║
+║  │  0. create isolated sandbox venv (_venv/) — app venv safe  │    ║
 ║  │  1. pip install -r requirements.txt   ► approval popup      │    ║
 ║  │  2. py_compile on tools.py + agent.py (no execution)       │    ║
 ║  │  3. python -c "import tools; import agent"  ► popup        │    ║
 ║  │                                                             │    ║
 ║  │  On failure → Claude rewrites file → approval → re-check   │    ║
-║  │              (up to 3 auto-fix attempts per step)           │    ║
+║  │              (up to 7 auto-fix attempts per step)           │    ║
 ║  └─────────────────────────────────────────────────────────────┘    ║
 ║                                                                      ║
 ║  ┌─────────────────────────────────────────────────────────────┐    ║
@@ -220,9 +221,26 @@ pip install -r requirements.txt
 # 2. Authenticate Claude (no API key — uses local CLI)
 claude login
 
-# 3. OpenAI key (embeddings only — not for generation)
-export OPENAI_API_KEY=sk-...        # Windows: set OPENAI_API_KEY=sk-...
+# 3. Configure environment — copy and edit .env
+cp .env.example .env   # then fill in your values
+```
 
+**.env** (all values required unless marked optional):
+
+```env
+# Embedding gateway (used by ChromaDB / RAG index)
+EMBEDDING_BASE_URL=https://your-gateway.company.com/v1
+EMBEDDING_API_KEY=your-api-key-here
+EMBEDDING_MODEL=text-embedding-3-small
+
+# Flask session signing key — generate with: python -c "import secrets; print(secrets.token_hex(32))"
+FLASK_SECRET_KEY=change-me
+
+# Auth (optional — leave SECRET_TOKEN blank to disable login page for local use)
+SECRET_TOKEN=
+```
+
+```bash
 # 4. Get ADK docs (3 MB — indexed once, reused forever)
 curl -o adk_docs.txt https://google.github.io/adk-docs/llms-full.txt
 
@@ -233,6 +251,27 @@ python app.py
 
 First run builds the RAG index automatically (~3,252 chunks, 2–5 min).
 Every subsequent start loads from disk in under a second.
+
+---
+
+## Authentication
+
+The app supports an optional shared-secret login page for team/shared deployments.
+
+| Mode | How to configure | Behaviour |
+|---|---|---|
+| **Local (single user)** | Leave `SECRET_TOKEN=` blank in `.env` | No login page — app opens directly |
+| **Shared deployment** | Set `SECRET_TOKEN=<long random string>` | Login page shown on first visit; signed browser cookie keeps user signed in |
+
+To generate a strong token:
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+- `/login` — login page (GET) / token submit (POST)
+- `/logout` — clears session cookie
+
+Session cookies are signed with `FLASK_SECRET_KEY` — changing this key invalidates all active sessions.
 
 ---
 
@@ -256,5 +295,6 @@ curl -X POST http://localhost:5000/rag/build \
 |---|---|
 | `flask` | Web UI + SSE streaming pipeline |
 | `claude-agent-sdk` | Claude calls — local CLI auth, no API key needed |
-| `openai` | `text-embedding-3-small` for RAG embeddings |
+| `openai` | Embedding model calls via gateway |
 | `chromadb` | Local persistent vector store |
+| `python-dotenv` | Loads `.env` at startup |
