@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skill → ADK Platform</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--surface:#161b27;--surface2:#1a2235;--border:#1e2535;
+  --muted:#64748b;--text:#e2e8f0;--accent:#6366f1;--green:#34d399;
+  --red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;--purple:#a78bfa;--teal:#2dd4bf;
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono','Fira Code',monospace;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Header ── */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:11px 22px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:15px}
+.logo-text h1{font-size:13px;font-weight:700;color:#f1f5f9}
+.logo-text p{font-size:10px;color:var(--muted)}
+.pipeline{margin-left:auto;display:flex;align-items:center;gap:0}
+.pipe-label{padding:3px 10px;border:1px solid var(--border);border-radius:10px;font-size:10px;color:#374151;transition:all .3s;white-space:nowrap}
+.pipe-label.active{border-color:var(--accent);color:#c7d2fe;background:#6366f133;font-weight:700;box-shadow:0 0 0 2px #6366f144}
+.pipe-label.done{border-color:var(--green);color:var(--green);background:#34d39918}
+.pipe-label.done::before{content:"✓ "}
+.pipe-label.warn{border-color:var(--yellow);color:var(--yellow);background:#f59e0b11}
+.pipe-label.warn::before{content:"⚠ "}
+.pipe-label.error{border-color:var(--red);color:var(--red)}
+.pipe-label.error::before{content:"✕ "}
+.pipe-arrow{color:#374151;font-size:10px;padding:0 3px}
+
+/* ── Layout ── */
+main{flex:1;display:grid;grid-template-columns:400px 1fr;grid-template-rows:1fr;overflow:hidden}
+
+/* ── Left Panel ── */
+.left{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.left-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.left-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.section-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+
+/* ── Skill Card ── */
+.skill-card{border:1px solid var(--border);border-radius:7px;overflow:hidden}
+.skill-card-hdr{background:var(--surface);padding:7px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.skill-card-name{font-size:10px;color:var(--accent)}
+.skill-card-body{display:flex;flex-direction:column;gap:0}
+.skill-mode-tabs{display:flex;border-bottom:1px solid var(--border)}
+.skill-mode-tab{flex:1;padding:5px;background:none;border:none;color:var(--muted);cursor:pointer;font-family:inherit;font-size:10px;transition:all .2s;text-align:center}
+.skill-mode-tab.active{color:var(--accent);background:var(--surface2);border-bottom:1px solid var(--accent)}
+.skill-mode-panel{display:none}
+.skill-mode-panel.active{display:block}
+textarea.skill-text{width:100%;min-height:120px;background:var(--bg);border:none;color:var(--text);font-family:inherit;font-size:11px;padding:9px 10px;resize:vertical;outline:none;line-height:1.6;display:block}
+
+/* ── Drop zone ── */
+.drop-zone{margin:8px;border:2px dashed var(--border);border-radius:6px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:#6366f108}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-zone-icon{font-size:22px;margin-bottom:4px}
+.drop-zone-text{font-size:10px;color:var(--muted)}
+.drop-zone-filename{font-size:10px;color:var(--green);margin-top:4px}
+
+/* ── Form elements ── */
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+textarea,input[type=text],select{background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:inherit;font-size:11px;padding:7px 9px;outline:none;width:100%;transition:border-color .2s}
+textarea:focus,input[type=text]:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;line-height:1.6}
+select option:disabled{color:var(--muted)}
+
+/* ── ADK Selector ── */
+.adk-selector{display:flex;gap:6px;flex-wrap:wrap}
+.adk-opt{padding:5px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:10px;color:var(--muted);background:none;font-family:inherit;transition:all .2s;position:relative}
+.adk-opt.selected{border-color:var(--accent);color:#818cf8;background:#6366f111}
+.adk-opt.disabled{opacity:.35;cursor:not-allowed}
+.adk-opt.disabled::after{content:"soon";position:absolute;top:-6px;right:-2px;font-size:8px;color:var(--muted);background:var(--surface2);padding:1px 3px;border-radius:3px}
+
+/* ── Buttons ── */
+.btn{padding:8px 18px;border:none;border-radius:5px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:opacity .2s}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff}
+.btn-approve{background:linear-gradient(135deg,#059669,#0d9488);color:#fff}
+.btn-sm{padding:3px 9px;font-size:10px;font-weight:400}
+.btn-ghost{background:#1e2535;border:1px solid var(--border);color:var(--muted)}
+.btn-danger{background:none;border:1px solid #7f1d1d;color:var(--red)}
+.row{display:flex;gap:8px;align-items:center}
+.row label{margin:0;white-space:nowrap}
+.err-box{padding:7px 10px;background:#450a0a;border:1px solid var(--red);border-radius:5px;font-size:10px;color:var(--red)}
+
+/* ── Right Panel ── */
+.right{display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 16px;flex-shrink:0}
+.tab{padding:9px 14px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;margin-bottom:-1px;white-space:nowrap}
+.tab.active{color:#f1f5f9;border-bottom-color:var(--accent)}
+.tab-content{flex:1;overflow:hidden;display:none;flex-direction:column;min-height:0}
+.tab-content.active{display:flex}
+
+/* ── ADR Panel ── */
+.adr-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.adr-toolbar{padding:9px 14px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.adr-toolbar-left{display:flex;align-items:center;gap:8px}
+.adr-intent{font-size:10px;color:var(--teal);font-style:italic;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conf-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.conf-high{background:#16401a;color:var(--green);border:1px solid var(--green)}
+.conf-medium{background:#422006;color:var(--yellow);border:1px solid var(--yellow)}
+.conf-low{background:#450a0a;color:var(--red);border:1px solid var(--red)}
+.adr-body{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.adr-section{border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0}
+.adr-section-title{background:var(--surface2);padding:6px 10px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.adr-section-title:hover{background:#1e2a3a;color:var(--text)}
+.adr-toggle{font-size:9px;opacity:.6;transition:transform .2s}
+.adr-section-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:11px}
+.adr-row{display:flex;flex-direction:column;gap:3px}
+.adr-key{font-size:10px;color:var(--muted)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;border:1px solid var(--muted);color:var(--text)}
+.badge-flat,.badge-session_only,.badge-none,.badge-per_step{border-color:#374151;color:#94a3b8}
+.badge-hierarchical,.badge-tool_output_passing{border-color:#06b6d4;color:#22d3ee;background:#06b6d411}
+.badge-pipeline,.badge-sqlite{border-color:#f59e0b;color:var(--yellow);background:#f59e0b11}
+.badge-router{border-color:#8b5cf6;color:var(--purple);background:#8b5cf611}
+.badge-stop{border-color:#ef4444;color:var(--red);background:#ef444411}
+.badge-retry{border-color:#06b6d4;color:#22d3ee;background:#06b6d411}
+.badge-warn_continue,.badge-warn{border-color:#f59e0b;color:var(--yellow);background:#f59e0b11}
+.badge-fallback{border-color:#8b5cf6;color:var(--purple);background:#8b5cf611}
+.badge-file_based,.badge-per_skill,.badge-grouped{border-color:#34d399;color:var(--green);background:#34d39911}
+.badge-databasesessionservice,.badge-inmemeorysessionservice{border-color:var(--accent);color:#818cf8;background:#6366f111}
+.badge-runner{border-color:var(--border);color:var(--muted)}
+.reasoning{font-size:10px;color:#6b7280;font-style:italic;line-height:1.6;margin-top:2px}
+.hitl-item{padding:5px 8px;background:#1a1a0a;border:1px solid #854d0e;border-radius:4px;font-size:10px;color:var(--yellow)}
+.warn-item{padding:5px 8px;background:#1a1010;border:1px solid #7f1d1d;border-radius:4px;font-size:10px;color:var(--red)}
+.flow-item{padding:4px 8px;background:var(--surface2);border-radius:4px;font-size:10px;color:var(--muted)}
+.per-skill-row{display:flex;align-items:center;gap:6px;font-size:10px}
+.adr-edit-area{display:none;flex:1;margin:10px 14px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:monospace;font-size:11px;padding:10px;resize:none;outline:none;line-height:1.6;min-height:200px}
+.adr-footer{padding:9px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.adr-status{font-size:10px;color:var(--muted)}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#374151;gap:8px}
+.empty .icon{font-size:26px}
+.empty p{font-size:11px;text-align:center}
+
+/* ── Log ── */
+.log-area{flex:1;overflow-y:auto;padding:10px 14px;font-size:11px;line-height:1.9;min-height:0}
+.ll{display:flex;gap:10px}
+.ll .ts{color:#2d3748;flex-shrink:0;font-size:10px}
+.ll.info .msg{color:var(--muted)}
+.ll.success .msg{color:var(--green)}
+.ll.error .msg{color:var(--red)}
+.ll.warning .msg{color:var(--yellow)}
+.ll.stage .msg{color:var(--blue);font-weight:600}
+
+/* ── Violations ── */
+.violations{padding:10px 14px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;min-height:0}
+.violation{padding:7px 10px;border-radius:5px;font-size:11px}
+.violation.error{background:#450a0a;border:1px solid var(--red);color:var(--red)}
+.violation.warning{background:#422006;border:1px solid var(--yellow);color:var(--yellow)}
+.vtype{font-size:9px;text-transform:uppercase;opacity:.7;margin-bottom:2px}
+
+/* ── Files ── */
+.file-tabs{padding:7px 14px;display:flex;gap:4px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--surface);flex-shrink:0}
+.file-tab{padding:3px 10px;border:1px solid transparent;border-radius:5px;background:none;color:var(--muted);cursor:pointer;font-family:monospace;font-size:10px}
+.file-tab.active{background:#1e2535;border-color:var(--border);color:#f1f5f9}
+.file-viewer{flex:1;overflow:auto;padding:10px 14px;background:var(--bg)}
+.file-viewer pre{margin:0;font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.dl-bar{padding:8px 14px;border-top:1px solid var(--border);background:var(--surface);display:flex;justify-content:flex-end}
+
+/* ── Fix Panel ── */
+.fix-panel{border-top:1px solid var(--border);padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--surface);flex-shrink:0}
+.fix-panel-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;align-items:center}
+.fix-row{display:flex;gap:8px;align-items:center}
+.fix-status{font-size:10px;min-height:14px}
+.fix-status.ok{color:var(--green)}
+.fix-status.err{color:var(--red)}
+.fix-status.warn{color:var(--yellow)}
+
+/* ── HITL Panel ── */
+.hitl-panel{display:none;position:absolute;bottom:0;left:0;right:0;background:#0d1117;border-top:2px solid var(--yellow);padding:16px 18px;z-index:10;flex-direction:column;gap:10px}
+.hitl-panel.visible{display:flex}
+.hitl-title{font-size:12px;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:8px}
+.hitl-subtitle{font-size:10px;color:var(--muted)}
+.hitl-points{display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto}
+.hitl-point{padding:7px 10px;background:#1a1a0a;border:1px solid #854d0e;border-radius:5px;font-size:10px}
+.hitl-point strong{color:var(--yellow)}
+.hitl-point .reason{color:#9ca3af;font-style:italic;margin-top:2px}
+.hitl-actions{display:flex;gap:8px;justify-content:flex-end}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #ffffff33;border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#1e2535;border-radius:2px}
+
+/* ── Permission Modal ── */
+.perm-overlay{position:fixed;inset:0;background:#00000099;z-index:200;display:none;align-items:center;justify-content:center}
+.perm-overlay.visible{display:flex}
+.perm-dialog{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:700px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 64px #00000099}
+.perm-hdr{padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.perm-title{font-size:13px;font-weight:700;color:#f1f5f9}
+.perm-title code{color:var(--accent);font-family:inherit}
+.perm-meta{font-size:10px;color:var(--muted);margin-top:3px}
+.perm-reason{font-size:10px;color:var(--teal);font-style:italic;margin-top:2px}
+.perm-code{flex:1;overflow-y:auto;padding:10px 14px;background:var(--bg);font-family:'JetBrains Mono','Fira Code',monospace;font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-word;min-height:80px;max-height:380px}
+.perm-ask{border-top:1px solid var(--border);padding:10px 14px;display:none;flex-direction:column;gap:8px;background:var(--surface2);flex-shrink:0}
+.perm-ask-row{display:flex;gap:8px;align-items:flex-start}
+.perm-ask-row textarea{flex:1;min-height:38px;max-height:80px;resize:vertical}
+.perm-answer{font-size:11px;color:var(--text);line-height:1.6;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;white-space:pre-wrap;word-break:break-word;display:none;max-height:110px;overflow-y:auto}
+.perm-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0;background:var(--surface);border-radius:0 0 10px 10px}
+
+/* ── ADR Chat Panel ── */
+.adr-chat{display:none;flex-direction:column;border-top:2px solid var(--accent);flex-shrink:0;height:260px}
+.adr-chat.open{display:flex}
+.adr-chat-history{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:8px;min-height:0}
+.adr-chat-hint{font-size:10px;color:var(--muted);text-align:center;padding:6px;align-self:center}
+.chat-msg{padding:7px 10px;border-radius:6px;font-size:11px;line-height:1.6;max-width:85%;white-space:pre-wrap;word-break:break-word}
+.chat-msg.user{background:var(--accent);color:#fff;align-self:flex-end}
+.chat-msg.assistant{background:var(--surface2);color:var(--text);align-self:flex-start;border:1px solid var(--border)}
+.chat-apply{margin-top:5px;align-self:flex-start}
+.adr-chat-input-row{padding:7px 10px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;background:var(--surface);align-items:flex-end}
+.adr-chat-input-row textarea{flex:1;min-height:28px;max-height:70px;resize:none;line-height:1.5}
+
+/* ── Resume Banner ── */
+.resume-banner{padding:8px 14px;background:#16401a;border-bottom:2px solid var(--green);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0}
+.resume-msg{font-size:11px;color:var(--green);font-weight:600}
+.resume-sub{font-size:10px;color:#4ade80;opacity:.8;margin-top:1px}
+
+/* ── Run Sanity Check panel ── */
+.run-panel{border-top:1px solid var(--border);padding:10px 14px;display:flex;flex-direction:column;gap:4px;background:var(--bg);flex-shrink:0;max-height:190px}
+.run-panel-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;margin-bottom:2px}
+.run-output-area{flex:1;overflow-y:auto;font-family:'JetBrains Mono','Fira Code',monospace;font-size:10px;line-height:1.8}
+.run-line-output{color:var(--muted)}
+.run-line-stage{color:var(--blue);font-weight:600;margin-top:4px}
+.run-line-ok{color:var(--green)}
+.run-line-warn{color:var(--yellow)}
+.run-line-err{color:var(--red)}
+
+/* ── Smoke Test panel ── */
+.smoke-panel{border-top:1px solid var(--border);padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--surface);flex-shrink:0}
+.smoke-panel-hdr{display:flex;align-items:baseline;gap:10px}
+.smoke-panel-title{font-size:10px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:.06em}
+.smoke-panel-sub{font-size:10px;color:var(--muted)}
+.smoke-env{display:flex;flex-direction:column;gap:4px}
+.smoke-env-row{display:flex;gap:6px;align-items:center}
+.smoke-env-row input[type=text]{width:160px;flex-shrink:0}
+.smoke-env-row input[type=password]{flex:1}
+.smoke-out{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 10px;max-height:180px;overflow-y:auto;font-family:'JetBrains Mono','Fira Code',monospace;font-size:10px;line-height:1.8;display:flex;flex-direction:column;gap:1px;display:none}
+.smoke-line-output{color:var(--muted)}
+.smoke-line-stage{color:var(--blue);font-weight:600;margin-top:3px}
+.smoke-line-ok,.smoke-line-step{color:var(--green)}
+.smoke-line-warn{color:var(--yellow)}
+.smoke-line-err,.smoke-line-error{color:var(--red)}
+.smoke-line-reply{color:var(--text);white-space:pre-wrap;border-left:2px solid var(--accent);padding-left:8px;margin-top:3px;font-size:11px}
+.smoke-launch{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 10px;display:none}
+.smoke-launch-label{font-size:10px;color:var(--muted);margin-bottom:4px}
+.smoke-launch pre{font-size:10px;color:var(--teal);line-height:1.9;margin:0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚙</div>
+  <div class="logo-text">
+    <h1>Skill → ADK Platform</h1>
+    <p>Architect-driven · RAG-grounded · ADR-reviewed</p>
+  </div>
+  <div class="pipeline">
+    <span class="pipe-label" id="pipe-parse">1·Parse</span><span class="pipe-arrow">→</span>
+    <span class="pipe-label" id="pipe-architect">2·Architect</span><span class="pipe-arrow">→</span>
+    <span class="pipe-label" id="pipe-review">3·ADR Review</span><span class="pipe-arrow">→</span>
+    <span class="pipe-label" id="pipe-generate">4·Generate</span><span class="pipe-arrow">→</span>
+    <span class="pipe-label" id="pipe-validate">5·Validate</span><span class="pipe-arrow">→</span>
+    <span class="pipe-label" id="pipe-tests">6·Tests</span><span class="pipe-arrow">→</span>
+    <span class="pipe-label" id="pipe-verify">7·Verify</span><span class="pipe-arrow">→</span>
+    <span class="pipe-label" id="pipe-hitl">8·HITL</span><span class="pipe-arrow">→</span>
+    <span class="pipe-label" id="pipe-package">9·Package</span>
+  </div>
+</header>
+
+<main>
+  <!-- ── LEFT ── -->
+  <div class="left">
+    <div class="left-body" id="skill-list">
+
+      <!-- ADK selector -->
+      <div>
+        <div class="section-label">Target ADK</div>
+        <div class="adk-selector" id="adk-selector">
+          <button class="adk-opt selected" data-adk="Google ADK" onclick="selectAdk(this)">Google ADK</button>
+          <button class="adk-opt disabled" data-adk="LangChain" onclick="return false">LangChain</button>
+          <button class="adk-opt disabled" data-adk="AutoGen" onclick="return false">AutoGen</button>
+          <button class="adk-opt disabled" data-adk="AWS Bedrock" onclick="return false">AWS Bedrock</button>
+        </div>
+      </div>
+
+      <!-- Agent intent -->
+      <div>
+        <div class="section-label">What should this agent do?</div>
+        <textarea id="agent-intent" rows="2"
+          placeholder="e.g. An agent that scans Java code for issues, auto-fixes them, generates updated API code, then creates a release and pushes a Docker image."></textarea>
+      </div>
+
+      <!-- Skills -->
+      <div>
+        <div class="section-label">
+          Skills
+          <button class="btn btn-sm btn-ghost" onclick="addSkillCard()">+ Add</button>
+        </div>
+        <div id="skill-cards" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+    </div>
+
+    <div class="left-footer">
+      <div class="row">
+        <label>Project name</label>
+        <input type="text" id="project-name" value="my-adk-agent" style="flex:1">
+      </div>
+      <div id="err-box" class="err-box" style="display:none"></div>
+      <button class="btn btn-primary" id="start-btn" onclick="runParseAndArchitect()">
+        ⚙ Analyze Skills
+      </button>
+    </div>
+  </div>
+
+  <!-- ── RIGHT ── -->
+  <div class="right">
+
+    <!-- Resume Banner — shown on page load if a previous session is detected -->
+    <div class="resume-banner" id="resume-banner" style="display:none">
+      <div>
+        <div class="resume-msg" id="resume-msg">Previous session found</div>
+        <div class="resume-sub" id="resume-sub"></div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-ghost btn-sm" onclick="dismissResume()">✕ Dismiss</button>
+        <button class="btn btn-approve btn-sm" onclick="resumeSession()">↩ Resume</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('adr',this)">🏗 Architecture (ADR)</button>
+      <button class="tab" onclick="switchTab('log',this)">📜 Log</button>
+      <button class="tab" onclick="switchTab('violations',this)" id="violations-tab">⚠ Issues</button>
+      <button class="tab" onclick="switchTab('files',this)" id="files-tab">📦 Files</button>
+    </div>
+
+    <!-- ADR Tab -->
+    <div class="tab-content active" id="tab-adr">
+      <div id="adr-empty" class="empty">
+        <div class="icon">🏗</div>
+        <p>Paste skills or upload skill zips<br>then click Analyze Skills</p>
+        <p style="font-size:10px;color:#2d3748;margin-top:4px">Architect Agent will produce an ADR you can review + edit</p>
+      </div>
+      <div class="adr-wrap" id="adr-wrap" style="display:none">
+        <div class="adr-toolbar">
+          <div class="adr-toolbar-left">
+            <span style="font-size:11px;color:var(--yellow);font-weight:600">Architecture Decision Record</span>
+            <span class="adr-intent" id="adr-intent-summary"></span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="conf-badge" id="conf-badge"></span>
+            <button class="btn btn-sm btn-ghost" id="adr-chat-toggle" onclick="toggleAdrChat()">💬 Chat</button>
+            <button class="btn btn-sm btn-ghost" onclick="toggleAdrEdit()">Edit JSON</button>
+          </div>
+        </div>
+        <div class="adr-body" id="adr-body"></div>
+
+        <!-- ADR Chat Panel — collapsible, toggled by 💬 Chat button -->
+        <div class="adr-chat" id="adr-chat">
+          <div class="adr-chat-history" id="adr-chat-history">
+            <div class="adr-chat-hint">Ask Claude to explain or refine any architecture decision</div>
+          </div>
+          <div class="adr-chat-input-row">
+            <textarea id="adr-chat-text" rows="1"
+              placeholder="e.g. Change topology to hierarchical, explain error_strategy…"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAdrChat();}"></textarea>
+            <button class="btn btn-primary btn-sm" id="adr-chat-send" onclick="sendAdrChat()">Send</button>
+          </div>
+        </div>
+
+        <textarea class="adr-edit-area" id="adr-edit-area"></textarea>
+        <div class="adr-footer">
+          <span class="adr-status" id="adr-status">Review decisions above, edit if needed, then approve.</span>
+          <button class="btn btn-approve" id="approve-btn" onclick="approveAndGenerate()" disabled>
+            ✓ Approve & Generate Code
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log Tab -->
+    <div class="tab-content" id="tab-log" style="position:relative">
+      <div class="log-area" id="log-area">
+        <div class="empty"><div class="icon">📋</div><p>Logs appear here</p></div>
+      </div>
+      <!-- HITL approval panel — floats over the log when waiting for sign-off -->
+      <div class="hitl-panel" id="hitl-panel">
+        <div class="hitl-title">⚠ Human-in-the-Loop Approval Required</div>
+        <div class="hitl-subtitle">Review the steps below. These will require your confirmation when running the agent locally.</div>
+        <div class="hitl-points" id="hitl-points-list"></div>
+        <div class="hitl-actions">
+          <button class="btn btn-danger btn-sm" onclick="respondHitl(false)">✕ Cancel Pipeline</button>
+          <button class="btn btn-approve" onclick="respondHitl(true)">✓ Approve & Package</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Violations Tab -->
+    <div class="tab-content" id="tab-violations">
+      <div class="violations" id="violations-area">
+        <div class="empty"><div class="icon">✓</div><p>No issues yet</p></div>
+      </div>
+    </div>
+
+    <!-- Files Tab -->
+    <div class="tab-content" id="tab-files">
+      <div class="empty" id="files-empty"><div class="icon">📦</div><p>Generated files appear here</p></div>
+      <div id="files-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+        <div class="file-tabs" id="file-tabs"></div>
+        <div class="file-viewer" id="file-viewer"><pre id="file-content"></pre></div>
+        <div class="dl-bar">
+          <button class="btn btn-ghost btn-sm" onclick="toggleFixPanel()" id="fix-toggle-btn">⚡ Fix a Runtime Error</button>
+          <button class="btn btn-ghost btn-sm" onclick="runSanityCheck()" id="run-btn">▶ Run Sanity Check</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleSmokePanel()" id="smoke-toggle-btn">🧪 Smoke Test</button>
+          <button class="btn btn-approve" onclick="downloadZip()">⬇ Download Zip</button>
+        </div>
+        <!-- Error feedback panel -->
+        <div class="fix-panel" id="fix-panel" style="display:none">
+          <div class="fix-panel-title">
+            <span>Paste the error you got when running the agent</span>
+            <span id="fix-detected" style="color:var(--teal);font-size:10px"></span>
+          </div>
+          <textarea id="fix-error-text" rows="5"
+            placeholder="Traceback (most recent call last):&#10;  File &quot;agent.py&quot;, line 12, in ...&#10;ImportError: cannot import name 'SequentialAgent' from 'google.adk.agents'"
+            oninput="autoDetectFile()"></textarea>
+          <div class="fix-row" style="justify-content:flex-end">
+            <div class="fix-status" id="fix-status"></div>
+            <button class="btn btn-primary btn-sm" onclick="runFix()" id="fix-btn">⚡ Fix with Claude</button>
+          </div>
+        </div>
+        <!-- Sanity check terminal output -->
+        <div class="run-panel" id="run-panel" style="display:none">
+          <div class="run-panel-title">▶ Sanity Check Output</div>
+          <div class="run-output-area" id="run-output-area"></div>
+        </div>
+
+        <!-- Smoke Test panel -->
+        <div class="smoke-panel" id="smoke-panel" style="display:none">
+          <div class="smoke-panel-hdr">
+            <span class="smoke-panel-title">🧪 Smoke Test</span>
+            <span class="smoke-panel-sub">sends one message — works with any model</span>
+          </div>
+
+          <!-- Env vars the agent needs (model-agnostic) -->
+          <div class="smoke-env" id="smoke-env"></div>
+          <button class="btn btn-ghost btn-sm" onclick="addEnvRow()" style="align-self:flex-start">+ Add env var</button>
+
+          <!-- Terminal output -->
+          <div class="smoke-out" id="smoke-out"></div>
+
+          <!-- Launch commands (shown after first run) -->
+          <div class="smoke-launch" id="smoke-launch">
+            <div class="smoke-launch-label">Run locally:</div>
+            <pre id="smoke-launch-cmds"></pre>
+            <button class="btn btn-ghost btn-sm" onclick="copyLaunchCmds()" style="margin-top:4px">Copy</button>
+          </div>
+
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-primary btn-sm" onclick="runSmokeTest()" id="smoke-btn">🧪 Run Smoke Test</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ── Permission Modal ── -->
+<div class="perm-overlay" id="perm-overlay">
+  <div class="perm-dialog">
+    <div class="perm-hdr">
+      <div class="perm-title" id="perm-title">✍ Write <code id="perm-filename"></code>?</div>
+      <div class="perm-meta" id="perm-meta"></div>
+      <div class="perm-reason" id="perm-reason"></div>
+    </div>
+    <pre class="perm-code" id="perm-code"></pre>
+    <div class="perm-ask" id="perm-ask">
+      <div class="perm-ask-row">
+        <textarea id="perm-question" rows="2" placeholder="Ask Claude why it generated this…"></textarea>
+        <button class="btn btn-ghost btn-sm" id="perm-send-btn" onclick="submitAskClaude()">Send</button>
+      </div>
+      <div class="perm-answer" id="perm-answer"></div>
+    </div>
+    <div class="perm-footer">
+      <button class="btn btn-ghost btn-sm" id="perm-ask-toggle" onclick="togglePermAsk()">💬 Ask Claude</button>
+      <button class="btn btn-danger" onclick="decidePermission(false)">✕ Reject</button>
+      <button class="btn btn-approve" onclick="decidePermission(true)">✓ Approve</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let skillCount = 0, parsedSkills = [], currentAdr = null;
+let currentJobId = null, editingAdr = false, generatedFiles = {};
+let selectedAdk = "Google ADK";
+
+// ── ADK selector ──────────────────────────────────────────────────────────
+function selectAdk(el) {
+  if (el.classList.contains("disabled")) return;
+  document.querySelectorAll(".adk-opt").forEach(b => b.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedAdk = el.dataset.adk;
+}
+
+// ── Skill cards ───────────────────────────────────────────────────────────
+function addSkillCard(prefill="") {
+  skillCount++;
+  const id = `sk-${skillCount}`;
+  const card = document.createElement("div");
+  card.className = "skill-card"; card.id = id;
+  card.innerHTML = `
+    <div class="skill-card-hdr">
+      <span class="skill-card-name" id="${id}-name">Skill ${skillCount}</span>
+      <div style="display:flex;gap:5px">
+        ${skillCount===1?`<button class="btn btn-sm btn-ghost" onclick="loadExample('${id}')">example</button>`:""}
+        <button class="btn btn-sm btn-danger" onclick="document.getElementById('${id}').remove()">×</button>
+      </div>
+    </div>
+    <div class="skill-card-body">
+      <div class="skill-mode-tabs">
+        <button class="skill-mode-tab active" onclick="switchMode('${id}','text',this)">Paste SKILL.md</button>
+        <button class="skill-mode-tab" onclick="switchMode('${id}','zip',this)">Upload Folder (zip)</button>
+      </div>
+      <div class="skill-mode-panel active" id="${id}-text-panel">
+        <textarea class="skill-text" id="${id}-text" oninput="updateName('${id}')"
+          placeholder="---\nname: my-skill\n---\n\n### Step 1:\n\`\`\`bash\n...\n\`\`\`">${prefill}</textarea>
+      </div>
+      <div class="skill-mode-panel" id="${id}-zip-panel">
+        <div class="drop-zone" id="${id}-drop"
+             ondragover="event.preventDefault();this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')"
+             ondrop="handleDrop(event,'${id}')">
+          <input type="file" accept=".zip" onchange="handleZipSelect(this,'${id}')">
+          <div class="drop-zone-icon">📁</div>
+          <div class="drop-zone-text">Drop skill folder zip or click to browse</div>
+          <div class="drop-zone-filename" id="${id}-zip-name"></div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById("skill-cards").appendChild(card);
+  if (prefill) updateName(id);
+}
+
+function switchMode(id, mode, btn) {
+  document.querySelectorAll(`#${id} .skill-mode-tab`).forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(`#${id} .skill-mode-panel`).forEach(p=>p.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById(`${id}-${mode}-panel`).classList.add("active");
+}
+
+function updateName(id) {
+  const t = document.getElementById(`${id}-text`)?.value || "";
+  const m = t.match(/^name:\s*(.+)$/m);
+  document.getElementById(`${id}-name`).textContent = m ? m[1].trim().replace(/"/g,"") : `Skill ${id.split("-")[1]}`;
+}
+
+const EXAMPLE = `---\nname: sonarqube-java-fixer\ndescription: Fetches SonarQube issues, groups by file, then commits fixes.\n---\n\n## Inputs\n- SONAR_TOKEN: API token\n- SONAR_HOST: https://sonarqube.myorg.com\n- PROJECT_KEY: project key\n- REPO_PATH: /path/to/repo\n\n## Workflow\n\n### Step 1: Fetch issues\n\`\`\`bash\ncurl -u $SONAR_TOKEN: "$SONAR_HOST/api/issues/search?projectKeys=$PROJECT_KEY" -o /tmp/issues.json\n\`\`\`\n\n### Step 2: Group by file\n\`\`\`python\nimport json\nwith open("/tmp/issues.json") as f: data = json.load(f)\ngrouped = {}\nfor i in data.get("issues",[]):\n    grouped.setdefault(i["component"].split(":")[-1],[]).append(i)\nwith open("/tmp/grouped.json","w") as f: json.dump(grouped,f)\nprint(f"Issues in {len(grouped)} files")\n\`\`\`\n\n### Step 3: Commit and push\n\`\`\`bash\ncd $REPO_PATH\ngit add -A\ngit commit -m "fix: SonarQube auto-fix [$PROJECT_KEY]" || echo "nothing"\ngit push origin HEAD\n\`\`\``;
+
+function loadExample(id) {
+  document.getElementById(`${id}-text`).value = EXAMPLE;
+  updateName(id);
+}
+
+// ── Zip upload ────────────────────────────────────────────────────────────
+const zipFiles = {};
+
+function handleZipSelect(input, id) {
+  const file = input.files[0];
+  if (!file) return;
+  zipFiles[id] = file;
+  document.getElementById(`${id}-zip-name`).textContent = `✓ ${file.name}`;
+  document.getElementById(`${id}-name`).textContent = file.name.replace(".zip","");
+}
+
+function handleDrop(event, id) {
+  event.preventDefault();
+  document.getElementById(`${id}-drop`).classList.remove("dragover");
+  const file = event.dataTransfer.files[0];
+  if (!file || !file.name.endsWith(".zip")) return;
+  zipFiles[id] = file;
+  document.getElementById(`${id}-zip-name`).textContent = `✓ ${file.name}`;
+  document.getElementById(`${id}-name`).textContent = file.name.replace(".zip","");
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
+  if(el) el.classList.add("active");
+  document.getElementById(`tab-${name}`).classList.add("active");
+}
+function switchTabById(name) {
+  const tab = [...document.querySelectorAll(".tab")].find(t=>t.textContent.includes(
+    name==="adr"?"ADR":name==="log"?"Log":name==="files"?"Files":"Issues"));
+  switchTab(name, tab);
+}
+
+// ── Pipeline badges ───────────────────────────────────────────────────────
+function setPipe(id, status) {
+  const el = document.getElementById(`pipe-${id}`);
+  el.classList.remove("active","done","error");
+  if(status) el.classList.add(status);
+}
+
+// ── Log ───────────────────────────────────────────────────────────────────
+function addLog(msg, type="info") {
+  const area = document.getElementById("log-area");
+  area.querySelector(".empty")?.remove();
+  const d = document.createElement("div");
+  d.className = `ll ${type}`;
+  d.innerHTML = `<span class="ts">${new Date().toLocaleTimeString()}</span><span class="msg">${esc(msg)}</span>`;
+  area.appendChild(d);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ── ADR Renderer (fully defensive) ───────────────────────────────────────
+function safe(obj, ...keys) {
+  return keys.reduce((o,k) => (o && o[k] !== undefined ? o[k] : null), obj);
+}
+
+function renderAdr(adr) {
+  _sid = 0; // reset section id counter each render
+  console.debug("[ADR] received:", adr);
+
+  const d = adr?.decisions || {};
+  if (!adr?.decisions) {
+    console.warn("[ADR] 'decisions' key missing — got:", Object.keys(adr || {}));
+  }
+
+  const body = document.getElementById("adr-body");
+  body.innerHTML = "";
+
+  // Intent summary + confidence
+  const intent = adr.agent_intent_summary || "";
+  document.getElementById("adr-intent-summary").textContent = intent;
+  const conf = adr.confidence || "medium";
+  const confBadge = document.getElementById("conf-badge");
+  confBadge.className = `conf-badge conf-${conf}`;
+  confBadge.textContent = `${conf} confidence`;
+  confBadge.title = adr.confidence_reasoning || "";
+
+  // Helper: badge — sanitise class name so spaces/parens don't split into multiple classes
+  const badge = (val) => val
+    ? `<span class="badge badge-${String(val).toLowerCase().replace(/[^a-z0-9_]/g,'_')}">${esc(String(val))}</span>`
+    : `<span style="color:var(--muted);font-size:10px">—</span>`;
+
+  // Topology
+  const topo = d.topology || {};
+  body.appendChild(section("Agent Topology", `
+    <div class="adr-row">
+      <div class="adr-key">Choice</div>
+      <div>${badge(topo.choice)}</div>
+      <div class="reasoning">${topo.reasoning || ""}</div>
+    </div>`));
+
+  // Memory
+  const mem = d.memory || {};
+  const st = mem.short_term || {}; const lt = mem.long_term || {};
+  body.appendChild(section("Memory Model", `
+    <div class="adr-row">
+      <div class="adr-key">Short-term</div>
+      <div>${badge(st.choice)}</div>
+      <div class="reasoning">${st.reasoning || ""}</div>
+    </div>
+    <div class="adr-row" style="margin-top:6px">
+      <div class="adr-key">Long-term</div>
+      <div>${badge(lt.choice)}</div>
+      <div class="reasoning">${lt.reasoning || ""}</div>
+    </div>`));
+
+  // Tool granularity
+  const tg = d.tool_granularity || {};
+  body.appendChild(section("Tool Granularity", `
+    <div class="adr-row">
+      <div>${badge(tg.choice)}</div>
+      <div class="reasoning">${tg.reasoning || ""}</div>
+    </div>`));
+
+  // Error strategy
+  const es = d.error_strategy || {};
+  const perSkill = (es.per_skill || []).map(s =>
+    `<div class="per-skill-row">
+       <span style="color:var(--muted)">${s.skill || "?"}:</span>
+       ${badge(s.strategy)}
+       <span class="reasoning" style="font-style:normal">${s.reasoning || ""}</span>
+     </div>`).join("");
+  body.appendChild(section("Error Strategy", `
+    <div class="adr-row">
+      <div class="adr-key">Default</div>
+      <div>${badge(es.default)}</div>
+    </div>
+    ${perSkill ? `<div class="adr-row" style="margin-top:6px"><div class="adr-key">Per skill</div>${perSkill}</div>` : ""}`));
+
+  // Recovery strategy
+  const rs = d.recovery_strategy || {};
+  if (rs.choice) {
+    body.appendChild(section("Recovery Strategy", `
+      <div class="adr-row">
+        <div class="adr-key">Choice</div>
+        <div>${badge(rs.choice)}</div>
+      </div>
+      <div class="reasoning">${rs.reasoning || ""}</div>`));
+  }
+
+  // Autonomy level
+  const al = d.autonomy_level || {};
+  if (al.choice) {
+    body.appendChild(section("Autonomy Level", `
+      <div class="adr-row">
+        <div class="adr-key">Level</div>
+        <div>${badge(al.choice)}</div>
+      </div>
+      <div class="reasoning">${al.reasoning || ""}</div>`));
+  }
+
+  // Context strategy
+  const cs = d.context_strategy || {};
+  if (cs.choice) {
+    body.appendChild(section("Context Strategy", `
+      <div class="adr-row">
+        <div class="adr-key">Choice</div>
+        <div>${badge(cs.choice)}</div>
+      </div>
+      <div class="reasoning">${cs.reasoning || ""}</div>`));
+  }
+
+  // Parallelism
+  const par = d.parallelism || {};
+  const pg = (par.parallel_groups || []).map(g =>
+    `<span style="color:var(--green);font-size:10px">[${g.join(" ∥ ")}]</span>`).join(" ");
+  const sc = (par.sequential_chains || []).map(c =>
+    `<span style="color:var(--blue);font-size:10px">[${c.join(" → ")}]</span>`).join(" ");
+  body.appendChild(section("Parallelism", `
+    ${pg ? `<div class="adr-row"><div class="adr-key">Parallel</div>${pg}</div>` : ""}
+    ${sc ? `<div class="adr-row"><div class="adr-key">Sequential</div>${sc}</div>` : ""}
+    <div class="reasoning">${par.reasoning || "No parallelism identified."}</div>`));
+
+  // HITL
+  const hitl = d.hitl_points || [];
+  body.appendChild(section("Human-in-the-Loop", hitl.length
+    ? hitl.map(h => `<div class="hitl-item">⚠ <strong>${h.skill || "?"}</strong> / ${h.step || "?"} — ${h.reason || ""}</div>`).join("")
+    : `<div class="reasoning">None identified.</div>`));
+
+  // Data flow
+  const flows = d.data_flow || [];
+  body.appendChild(section("Data Flow", flows.length
+    ? flows.map(f => `<div class="flow-item">${f.from||"?"} → ${f.to||"?"}: <em>${f.produces||"?"}</em> via ${f.via||"?"}</div>`).join("")
+    : `<div class="reasoning">No cross-skill data flow identified.</div>`));
+
+  // Warnings
+  const warns = adr.warnings || [];
+  if (warns.length) {
+    body.appendChild(section("Warnings", warns.map(w => `<div class="warn-item">⚠ ${w}</div>`).join("")));
+  }
+
+  // ADK components
+  const comp = adr.adk_components || {};
+  const agentItems = (comp.agents_needed || [])
+    .map(a => `<div class="flow-item">${esc(String(a))}</div>`).join("");
+  const toolCount = (comp.tools_needed || []).length;
+  const toolItems = (comp.tools_needed || [])
+    .map(t => `<span style="color:var(--muted);font-size:10px;font-family:monospace;display:inline-block;margin:1px 3px">${esc(t)}</span>`).join("");
+  body.appendChild(section("ADK Components", `
+    <div class="adr-row">
+      <div class="adr-key">Session service</div>
+      <div>${badge(comp.session_service)}</div>
+    </div>
+    <div class="adr-row" style="margin-top:6px">
+      <div class="adr-key">Runner</div>
+      <div>${badge(comp.runner_type)}</div>
+    </div>
+    ${agentItems ? `<div class="adr-row" style="margin-top:6px"><div class="adr-key">Agents</div><div style="display:flex;flex-direction:column;gap:3px;margin-top:3px">${agentItems}</div></div>` : ""}
+    ${toolItems ? `<div class="adr-row" style="margin-top:6px"><div class="adr-key">Tools (${toolCount})</div><div style="margin-top:3px;line-height:2">${toolItems}</div></div>` : ""}`));
+}
+
+let _sid = 0;
+function section(title, bodyHtml) {
+  const id = `adr-s${++_sid}`;
+  const el = document.createElement("div");
+  el.className = "adr-section";
+  el.innerHTML = `
+    <div class="adr-section-title" onclick="toggleSection('${id}')">
+      <span>${title}</span>
+      <span class="adr-toggle" id="${id}-icon">▲</span>
+    </div>
+    <div class="adr-section-body" id="${id}">${bodyHtml}</div>`;
+  return el;
+}
+
+function toggleSection(id) {
+  const body = document.getElementById(id);
+  const icon = document.getElementById(`${id}-icon`);
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'flex';
+  icon.textContent = open ? '▼' : '▲';
+  icon.style.transform = open ? '' : '';
+}
+
+// ── ADR Edit toggle ───────────────────────────────────────────────────────
+function toggleAdrEdit() {
+  editingAdr = !editingAdr;
+  const area = document.getElementById("adr-edit-area");
+  const body = document.getElementById("adr-body");
+  const btn  = document.querySelector("[onclick='toggleAdrEdit()']");
+  if (editingAdr) {
+    area.value = JSON.stringify(currentAdr, null, 2);
+    area.style.display = "block";
+    body.style.display = "none";
+    btn.textContent = "View Rendered";
+  } else {
+    try {
+      currentAdr = JSON.parse(area.value);
+      renderAdr(currentAdr);
+    } catch(e) { alert("Invalid JSON: " + e.message); editingAdr = true; return; }
+    area.style.display = "none";
+    body.style.display = "flex";
+    btn.textContent = "Edit JSON";
+  }
+}
+
+// ── ADR Chat ──────────────────────────────────────────────────────────────
+let adrConversation = [];
+
+function toggleAdrChat() {
+  const chat = document.getElementById("adr-chat");
+  const btn  = document.getElementById("adr-chat-toggle");
+  const open = chat.classList.contains("open");
+  chat.classList.toggle("open", !open);
+  btn.textContent = open ? "💬 Chat" : "✕ Chat";
+}
+
+function resetAdrChat() {
+  adrConversation = [];
+  document.getElementById("adr-chat-history").innerHTML =
+    '<div class="adr-chat-hint">Ask Claude to explain or refine any architecture decision</div>';
+  const chat = document.getElementById("adr-chat");
+  const btn  = document.getElementById("adr-chat-toggle");
+  chat.classList.remove("open");
+  btn.textContent = "💬 Chat";
+}
+
+function _appendChatMsg(role, text, proposedAdr) {
+  const hist = document.getElementById("adr-chat-history");
+  hist.querySelector(".adr-chat-hint")?.remove();
+
+  const msg = document.createElement("div");
+  msg.className = `chat-msg ${role}`;
+  msg.textContent = text;
+  hist.appendChild(msg);
+
+  if (proposedAdr && role === "assistant") {
+    const applyBtn = document.createElement("button");
+    applyBtn.className = "btn btn-approve btn-sm chat-apply";
+    applyBtn.textContent = "✓ Apply Changes";
+    applyBtn.onclick = () => {
+      currentAdr = proposedAdr;
+      renderAdr(currentAdr);
+      if (editingAdr) {
+        document.getElementById("adr-edit-area").value = JSON.stringify(currentAdr, null, 2);
+      }
+      document.getElementById("adr-status").textContent =
+        "ADR updated via chat — review decisions above, then approve.";
+      applyBtn.textContent = "✓ Applied";
+      applyBtn.disabled = true;
+    };
+    hist.appendChild(applyBtn);
+  }
+  hist.scrollTop = hist.scrollHeight;
+}
+
+async function sendAdrChat() {
+  if (!currentAdr) return;
+  const textarea = document.getElementById("adr-chat-text");
+  const sendBtn  = document.getElementById("adr-chat-send");
+  const message  = textarea.value.trim();
+  if (!message) return;
+
+  sendBtn.disabled = true;
+  textarea.disabled = true;
+
+  _appendChatMsg("user", message, null);
+  adrConversation.push({ role: "user", content: message });
+  textarea.value = "";
+
+  // Typing indicator
+  const typing = document.createElement("div");
+  typing.className = "chat-msg assistant";
+  typing.id = "adr-typing";
+  typing.innerHTML = '<span class="spinner"></span> thinking…';
+  document.getElementById("adr-chat-history").appendChild(typing);
+  document.getElementById("adr-chat-history").scrollTop = 9999;
+
+  try {
+    const res = await fetch("/chat/adr", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        current_adr:  currentAdr,
+        conversation: adrConversation.slice(0, -1),  // prior turns only
+        message,
+      }),
+    });
+    const data = await res.json();
+    document.getElementById("adr-typing")?.remove();
+
+    if (data.error) {
+      _appendChatMsg("assistant", "⚠ Error: " + data.error, null);
+      return;
+    }
+
+    _appendChatMsg("assistant", data.response, data.proposed_adr || null);
+    adrConversation.push({ role: "assistant", content: data.response });
+
+  } catch (e) {
+    document.getElementById("adr-typing")?.remove();
+    _appendChatMsg("assistant", "⚠ Request failed: " + e.message, null);
+  } finally {
+    sendBtn.disabled = false;
+    textarea.disabled = false;
+    textarea.focus();
+  }
+}
+
+// ── Parse + Architect ─────────────────────────────────────────────────────
+async function runParseAndArchitect() {
+  const agentIntent = document.getElementById("agent-intent").value.trim();
+  hideErr();
+  setRunning(true, "Analyzing…");
+  parsedSkills = []; currentAdr = null;
+  clearSession();
+  document.querySelectorAll(".pipe-label").forEach(b=>b.classList.remove("active","done","error"));
+  switchTabById("log");
+
+  // Build FormData for multipart upload (handles both text + zip)
+  const formData = new FormData();
+  const cards = document.querySelectorAll(".skill-card");
+  let hasAny = false;
+
+  for (const card of cards) {
+    const id = card.id;
+    const activePanel = card.querySelector(".skill-mode-panel.active");
+    if (!activePanel) continue;
+
+    if (activePanel.id === `${id}-text-panel`) {
+      const text = document.getElementById(`${id}-text`)?.value.trim();
+      if (text) { formData.append("skill_texts[]", text); hasAny = true; }
+    } else {
+      const zf = zipFiles[id];
+      if (zf) { formData.append("skill_zips[]", zf); hasAny = true; }
+    }
+  }
+
+  if (!hasAny) { showErr("Add at least one skill (paste or upload zip)."); setRunning(false); return; }
+
+  addLog(`Parsing skills (${[...cards].length} card(s))…`, "stage");
+  setPipe("parse","active");
+
+  const parseRes = await fetch("/parse", { method:"POST", body: formData });
+  const parseData = await parseRes.json();
+
+  if (parseData.error) {
+    addLog(`✕ Parse error: ${parseData.error}`, "error");
+    setPipe("parse","error"); setRunning(false); return;
+  }
+  parsedSkills = parseData.parsed;
+  (parseData.errors||[]).forEach(e => addLog(`⚠ ${e}`, "warning"));
+  addLog(`✓ Parsed ${parsedSkills.length} skill(s): ${parsedSkills.map(s=>s.name).join(", ")}`, "success");
+  setPipe("parse","done");
+
+  setPipe("architect","active");
+  addLog("Running Architect Agent…", "stage");
+
+  const archRes = await fetch("/architect", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ parsed_skills: parsedSkills, agent_intent: agentIntent, adk_choice: selectedAdk })
+  });
+  const archData = await archRes.json();
+
+  if (archData.error) {
+    addLog(`✕ Architect error: ${archData.error}`, "error");
+    setPipe("architect","error"); setRunning(false); return;
+  }
+
+  currentAdr = archData.adr;
+  addLog(`✓ ADR produced — topology: ${currentAdr?.decisions?.topology?.choice}, confidence: ${currentAdr?.confidence}`, "success");
+  (currentAdr?.warnings||[]).forEach(w => addLog(`⚠ ${w}`, "warning"));
+  setPipe("architect","done");
+  setPipe("review","active");
+
+  // Render ADR
+  document.getElementById("adr-empty").style.display = "none";
+  document.getElementById("adr-wrap").style.display = "flex";
+  renderAdr(currentAdr);
+  resetAdrChat();
+  saveCheckpointAdr();
+  document.getElementById("approve-btn").disabled = false;
+  switchTabById("adr");
+  setRunning(false);
+}
+
+// ── Approve + Generate ────────────────────────────────────────────────────
+async function approveAndGenerate() {
+  if (editingAdr) {
+    try { currentAdr = JSON.parse(document.getElementById("adr-edit-area").value); }
+    catch(e) { alert("Fix JSON before approving: " + e.message); return; }
+  }
+
+  const projectName = document.getElementById("project-name").value.trim() || "my-adk-agent";
+  document.getElementById("approve-btn").disabled = true;
+  document.getElementById("approve-btn").innerHTML = `<span class="spinner"></span> Generating…`;
+  setPipe("review","done"); setPipe("generate","active");
+  switchTabById("log");
+  addLog("ADR approved — starting code generation…", "stage");
+
+  const res = await fetch("/generate", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ parsed_skills: parsedSkills, adr: currentAdr, project_name: projectName })
+  });
+
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+
+  while(true) {
+    const {done, value} = await reader.read();
+    if(done) break;
+    buf += dec.decode(value, {stream:true});
+    const lines = buf.split("\n\n"); buf = lines.pop();
+    for(const line of lines) {
+      if(!line.startsWith("data: ")) continue;
+      try { handleGenEvent(JSON.parse(line.slice(6))); } catch {}
+    }
+  }
+
+  document.getElementById("approve-btn").disabled = false;
+  document.getElementById("approve-btn").innerHTML = "✓ Approve & Generate Code";
+}
+
+function handleGenEvent(ev) {
+  switch(ev.event) {
+    case "job_id": currentJobId = ev.job_id; addLog(`Job: ${ev.project_name}`, "info"); break;
+    case "info":   addLog(ev.message, "info"); break;
+    case "stage":
+      if(ev.name==="generate")  setPipe("generate","active");
+      if(ev.name==="validate")  { setPipe("generate","done"); setPipe("validate","active"); }
+      if(ev.name==="tests")     { setPipe("validate","done"); setPipe("tests","active"); }
+      if(ev.name==="verify")    { setPipe("tests","done");    setPipe("verify","active"); }
+      if(ev.name==="write")     { setPipe("hitl","done");     setPipe("package","active"); }
+      addLog(ev.message, "stage"); break;
+    case "stage_done":
+      if(ev.name==="write")  setPipe("package","done");
+      if(ev.name==="verify") setPipe("verify","done");
+      if(ev.name==="tests")  setPipe("tests","done");
+      addLog(ev.message, "success");
+      if(ev.name==="generate" && ev.rag_queries?.length)
+        addLog(`↳ RAG queries Claude planned (${ev.rag_queries.length}): ${ev.rag_queries.join(" | ")}`, "info");
+      if(ev.name==="generate" && ev.agent_prompts?.length)
+        addLog(`↳ Agent prompt files: ${ev.agent_prompts.join(", ")}`, "info");
+      if(ev.name==="verify" && ev.verify) renderVerifyDetails(ev.verify);
+      break;
+    case "stage_warn":
+      if(ev.name==="verify") setPipe("verify","warn");
+      addLog(ev.message, "warning");
+      if(ev.verify) renderVerifyDetails(ev.verify);
+      break;
+    case "hitl_required":
+      setPipe("verify","done"); setPipe("hitl","active");
+      addLog(`⚠ ${ev.message}`, "warning");
+      showHitlPanel(ev.job_id, ev.hitl_points||[]);
+      switchTabById("log");
+      break;
+    case "hitl_done":
+      setPipe("hitl","done");
+      hideHitlPanel();
+      addLog(ev.message, "success"); break;
+    case "hitl_rejected":
+      setPipe("hitl","error");
+      hideHitlPanel();
+      addLog(`✕ ${ev.message}`, "error"); break;
+    case "validation_result":
+      const total = (ev.code_issues||[]).length + (ev.adr_violations||[]).length;
+      if(total>0) { addLog(`Fixed ${total} issue(s)`, "warning"); renderViolations(ev.code_issues||[], ev.adr_violations||[]); }
+      else addLog("✓ Code + ADR conformance valid", "success"); break;
+    case "permission_required":
+      showPermModal(ev);
+      switchTabById("log");
+      break;
+    case "file":    if(ev.filename && ev.content !== undefined) _upsertFile(ev.filename, ev.content); break;
+    case "warning": addLog(`⚠ ${ev.message}`, "warning"); break;
+    case "error":   addLog(`✕ ${ev.message}`, "error"); break;
+    case "done":    addLog("✓ Pipeline complete", "success"); fetchFiles(); break;
+  }
+}
+
+// ── HITL Panel ────────────────────────────────────────────────────────────────
+let _hitlJobId = null;
+
+function showHitlPanel(jobId, points) {
+  _hitlJobId = jobId;
+  const list = document.getElementById("hitl-points-list");
+  list.innerHTML = "";
+  points.forEach(p => {
+    const d = document.createElement("div");
+    d.className = "hitl-point";
+    d.innerHTML = `<strong>${esc(p.skill||"?")} / ${esc(p.step||"?")}</strong><div class="reason">${esc(p.reason||"")}</div>`;
+    list.appendChild(d);
+  });
+  document.getElementById("hitl-panel").classList.add("visible");
+}
+
+function hideHitlPanel() {
+  document.getElementById("hitl-panel").classList.remove("visible");
+  _hitlJobId = null;
+}
+
+async function respondHitl(approved) {
+  if(!_hitlJobId) return;
+  const panel = document.getElementById("hitl-panel");
+  panel.querySelectorAll("button").forEach(b => b.disabled = true);
+  await fetch(`/hitl/approve/${_hitlJobId}`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({approved})
+  });
+  // Panel hides when hitl_done / hitl_rejected event arrives from the SSE stream
+}
+
+function renderVerifyDetails(v) {
+  if(!v) return;
+  if(v.syntax_errors?.length) {
+    const area = document.getElementById("violations-area");
+    area.querySelector(".empty")?.remove();
+    v.syntax_errors.forEach(e => {
+      const d = document.createElement("div");
+      d.className = "violation error";
+      d.innerHTML = `<div class="vtype">syntax · error</div>${esc(e)}`;
+      area.appendChild(d);
+    });
+    document.getElementById("violations-tab").textContent =
+      `⚠ Issues (${area.querySelectorAll(".violation").length})`;
+  }
+}
+
+function renderViolations(codeIssues, adrViolations) {
+  const area = document.getElementById("violations-area");
+  area.querySelector(".empty")?.remove();
+  [...codeIssues.map(i=>({...i,vtype:"code"})), ...adrViolations.map(i=>({...i,vtype:"adr"}))].forEach(i=>{
+    const d = document.createElement("div");
+    d.className = `violation ${i.severity}`;
+    d.innerHTML = `<div class="vtype">${i.vtype} · ${i.severity}</div>${esc(i.issue||"")}${i.fix?`<div style="color:#6b7280;font-size:10px;margin-top:3px">Fix: ${esc(i.fix)}</div>`:""}`;
+    area.appendChild(d);
+  });
+  document.getElementById("violations-tab").textContent = `⚠ Issues (${codeIssues.length+adrViolations.length})`;
+}
+
+// ── Files ─────────────────────────────────────────────────────────────────
+const _fileIcons = {"agent.py":"🤖","tools.py":"🔧","test_tools.py":"🧪","requirements.txt":"📦","adr.json":"🏗","README.md":"📄","Dockerfile":"🐳",".dockerignore":"🐳"};
+const _fileIcon  = f => f.startsWith("scripts/") ? "📜" : f.startsWith("prompts/") ? "🧠" : (_fileIcons[f.split("/").pop()]||"📄");
+
+function _upsertFile(name, content) {
+  const isFirst = Object.keys(generatedFiles).length === 0;
+  generatedFiles[name] = content;
+
+  // Show panel on first file
+  if (isFirst) {
+    document.getElementById("files-empty").style.display = "none";
+    document.getElementById("files-panel").style.display = "flex";
+  }
+
+  // Add tab button if not already present, otherwise leave it
+  const tabs = document.getElementById("file-tabs");
+  const existing = [...tabs.querySelectorAll(".file-tab")].find(b => b.dataset.fname === name);
+  if (!existing) {
+    const btn = document.createElement("button");
+    btn.className = "file-tab";
+    btn.dataset.fname = name;
+    btn.textContent = _fileIcon(name) + " " + name;
+    btn.onclick = () => selectFile(name);
+    tabs.appendChild(btn);
+  }
+
+  // Auto-select first file and switch to Files tab
+  if (isFirst) {
+    selectFile(name);
+    switchTabById("files");
+  } else {
+    // Refresh view if this file is currently open
+    const active = document.querySelector(".file-tab.active");
+    if (active && active.dataset.fname === name) selectFile(name);
+  }
+}
+
+async function fetchFiles() {
+  if(!currentJobId) return;
+  const res = await fetch(`/files/${currentJobId}`);
+  if(!res.ok) return;
+  const all = await res.json();
+  // Upsert any files not already shown (requirements.txt, README.md, adr.json, run_tests.*)
+  Object.entries(all).forEach(([name, content]) => _upsertFile(name, content));
+  saveCheckpointGenerated();
+}
+
+function selectFile(name) {
+  document.querySelectorAll(".file-tab").forEach(b=>b.classList.toggle("active", b.dataset.fname === name || b.textContent.includes(name.split("/").pop())));
+  const content = generatedFiles[name]||"";
+  document.getElementById("file-content").innerHTML = content.split("\n").map((line,i)=>{
+    return `<span style="display:block"><span style="color:#2d3748;user-select:none;margin-right:10px;font-size:10px;display:inline-block;min-width:24px;text-align:right">${i+1}</span><span style="color:${lc(line)}">${esc(line)}</span></span>`;
+  }).join("");
+}
+
+function lc(line) {
+  if(line.trim().startsWith("#")) return "#6b7280";
+  if(line.trim().startsWith("@")) return "#a78bfa";
+  if(/^(from|import)\s/.test(line.trim())) return "#f87171";
+  if(/^(async def|def |class )/.test(line.trim())) return "#60a5fa";
+  if(line.includes("root_agent")||line.includes("Agent(")) return "#34d399";
+  if(line.includes("subprocess")) return "#fbbf24";
+  if(/^\s*(return|if |else:|elif |try:|except)/.test(line)) return "#f472b6";
+  return "#e2e8f0";
+}
+
+async function downloadZip() {
+  // Prefer session download — it survives server restarts
+  const sid = _readSession()?.sessionId;
+  if (sid) { window.location.href = `/session/${sid}/download`; return; }
+  // Fall back to in-memory job (only works in same server session)
+  if (currentJobId) {
+    const ok = await fetch(`/files/${currentJobId}`).then(r => r.ok).catch(() => false);
+    if (ok) { window.location.href = `/download/${currentJobId}`; return; }
+  }
+  alert("No downloadable files found. Re-run the pipeline.");
+}
+
+// ── Fix panel ──────────────────────────────────────────────────────────────────
+function toggleFixPanel() {
+  const panel = document.getElementById("fix-panel");
+  const btn   = document.getElementById("fix-toggle-btn");
+  const open  = panel.style.display !== "none";
+  panel.style.display = open ? "none" : "flex";
+  btn.textContent = open ? "⚡ Fix a Runtime Error" : "✕ Close Fix Panel";
+}
+
+function autoDetectFile() {
+  const err = document.getElementById("fix-error-text").value;
+  const det = document.getElementById("fix-detected");
+  const known = Object.keys(generatedFiles);
+  const matches = [...err.matchAll(/File ["']([^"']+)['"]/g)];
+  for (const m of matches) {
+    const base = m[1].replace(/\\/g, "/").split("/").pop();
+    const hit  = known.find(f => f.split("/").pop() === base);
+    if (hit) { det.textContent = "Detected: " + hit; return; }
+  }
+  det.textContent = known.length ? "" : "";
+}
+
+async function runFix() {
+  const errorText = document.getElementById("fix-error-text").value.trim();
+  if (!errorText) { setFixStatus("Paste an error traceback first", "err"); return; }
+  if (!Object.keys(generatedFiles).length) {
+    setFixStatus("No generated files — run the pipeline first", "err"); return;
+  }
+
+  const btn = document.getElementById("fix-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Fixing…';
+  setFixStatus("Asking Claude…", "");
+
+  try {
+    const res = await fetch("/fix", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        error:  errorText,
+        files:  generatedFiles,
+        adr:    currentAdr || {},
+        job_id: currentJobId || "",
+      })
+    });
+    const data = await res.json();
+
+    if (data.error) { setFixStatus("✕ " + data.error, "err"); return; }
+
+    const filename = data.filename;
+    generatedFiles[filename] = data.fixed;
+    selectFile(filename);
+    document.getElementById("fix-detected").textContent = "Fixed: " + filename;
+
+    const syntaxOk = data.verify?.syntax_ok ?? true;
+    const errs     = data.verify?.syntax_errors ?? [];
+    if (syntaxOk) {
+      setFixStatus("✓ Fixed — re-download to get the updated file.", "ok");
+      addLog(`⚡ ${filename} fixed — syntax OK`, "success");
+    } else {
+      setFixStatus("⚠ Applied but syntax errors remain: " + errs.slice(0,2).join("; "), "warn");
+      addLog(`⚡ ${filename} fixed — syntax errors remain`, "warning");
+    }
+    document.getElementById("fix-error-text").value = "";
+  } catch (e) {
+    setFixStatus("✕ Request failed: " + e.message, "err");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "⚡ Fix with Claude";
+  }
+}
+
+function setFixStatus(msg, type) {
+  const el = document.getElementById("fix-status");
+  el.textContent = msg;
+  el.className = "fix-status" + (type ? " " + type : "");
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+function setRunning(on, label) {
+  const btn = document.getElementById("start-btn");
+  btn.disabled = on;
+  btn.innerHTML = on ? `<span class="spinner"></span> ${label||"Running…"}` : "⚙ Analyze Skills";
+}
+function showErr(msg) { const b=document.getElementById("err-box"); b.textContent=msg; b.style.display="block"; }
+function hideErr() { document.getElementById("err-box").style.display="none"; }
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ── Permission Modal ─────────────────────────────────────────────────────────
+let _perm = null;
+
+function showPermModal(data) {
+  _perm = data;
+  document.getElementById("perm-title").innerHTML =
+    '✍ Write <code>' + esc(data.filename) + '</code>?';
+  document.getElementById("perm-meta").textContent =
+    `${data.total_lines} lines · ${(data.total_chars / 1024).toFixed(1)} KB`;
+  document.getElementById("perm-reason").textContent = data.reason || "";
+  document.getElementById("perm-code").textContent =
+    data.content + (data.total_chars > 8000 ? "\n\n… [truncated — full file will be written]" : "");
+  document.getElementById("perm-ask").style.display = "none";
+  document.getElementById("perm-ask-toggle").style.display = "";
+  document.getElementById("perm-answer").style.display = "none";
+  document.getElementById("perm-answer").textContent = "";
+  document.getElementById("perm-question").value = "";
+  document.getElementById("perm-ask-toggle").textContent = "💬 Ask Claude";
+  document.getElementById("perm-overlay").classList.add("visible");
+}
+
+function showCmdModal(data) {
+  _perm = { request_id: data.request_id, job_id: data.job_id, filename: data.command };
+  document.getElementById("perm-title").innerHTML = '▶ Run command?';
+  document.getElementById("perm-meta").textContent = "";
+  document.getElementById("perm-reason").textContent = data.reason || "";
+  document.getElementById("perm-code").textContent = "$ " + data.command;
+  document.getElementById("perm-ask").style.display = "none";
+  document.getElementById("perm-ask-toggle").style.display = "none";
+  document.getElementById("perm-answer").style.display = "none";
+  document.getElementById("perm-overlay").classList.add("visible");
+}
+
+function decidePermission(approved) {
+  if (!_perm) return;
+  const { request_id, job_id, filename } = _perm;
+  _perm = null;
+  document.getElementById("perm-overlay").classList.remove("visible");
+  fetch(`/permission/${request_id}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ approved, job_id })
+  });
+  addLog(approved ? `✓ Approved: ${filename}` : `✕ Rejected: ${filename}`,
+         approved ? "success" : "error");
+}
+
+function togglePermAsk() {
+  const area = document.getElementById("perm-ask");
+  const open = area.style.display === "flex";
+  area.style.display = open ? "none" : "flex";
+  document.getElementById("perm-ask-toggle").textContent = open ? "💬 Ask Claude" : "✕ Close";
+}
+
+async function submitAskClaude() {
+  if (!_perm) return;
+  const question = document.getElementById("perm-question").value.trim();
+  if (!question) return;
+  const btn = document.getElementById("perm-send-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  const ansEl = document.getElementById("perm-answer");
+  ansEl.style.display = "block";
+  ansEl.textContent = "Asking Claude…";
+  try {
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, context: _perm.content, filename: _perm.filename })
+    });
+    const data = await res.json();
+    ansEl.textContent = data.answer || data.error || "No response";
+  } catch(e) {
+    ansEl.textContent = "Error: " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Send";
+  }
+}
+
+// ── Run Sanity Check ──────────────────────────────────────────────────────────
+async function runSanityCheck() {
+  if (!currentJobId) {
+    addLog("Sanity check needs an active job — re-run generation to enable it.", "warning");
+    return;
+  }
+
+  const btn = document.getElementById("run-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Running…';
+
+  const panel = document.getElementById("run-panel");
+  panel.style.display = "flex";
+  document.getElementById("run-output-area").innerHTML = "";
+  switchTabById("files");
+
+  const res = await fetch(`/run/${currentJobId}`);
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n\n"); buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      try { handleRunEvent(JSON.parse(line.slice(6))); } catch {}
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = "▶ Run Sanity Check";
+}
+
+function handleRunEvent(ev) {
+  switch (ev.event) {
+    case "run_stage":
+      appendRunLine(ev.message, "stage"); break;
+    case "run_output":
+      appendRunLine(ev.line, "output"); break;
+    case "run_step_ok":
+      appendRunLine("✓ " + ev.message, "ok"); break;
+    case "run_step_warn":
+      appendRunLine("⚠ " + ev.message, "warn"); break;
+    case "run_step_error":
+      appendRunLine("✕ " + ev.message, "err"); break;
+    case "run_done":
+      appendRunLine(
+        ev.ok ? "\n✓ Sanity check passed — re-download to get fixed files."
+               : "\n✕ Sanity check failed — see errors above.",
+        ev.ok ? "ok" : "err"
+      ); break;
+    case "cmd_required":
+      showCmdModal(ev); break;
+    case "permission_required":
+      showPermModal(ev); break;
+    case "file":
+      // Auto-fixed file from the run loop — update viewer
+      if (ev.filename && ev.content !== undefined) {
+        _upsertFile(ev.filename, ev.content);
+        appendRunLine(`  ✓ ${ev.filename} updated`, "ok");
+      }
+      break;
+  }
+}
+
+function appendRunLine(text, type) {
+  const area = document.getElementById("run-output-area");
+  const el = document.createElement("div");
+  el.className = "run-line-" + (type || "output");
+  el.textContent = text;
+  area.appendChild(el);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ── Smoke Test ───────────────────────────────────────────────────────────────
+function toggleSmokePanel() {
+  const panel = document.getElementById("smoke-panel");
+  const open  = panel.style.display !== "none";
+  panel.style.display = open ? "none" : "flex";
+  document.getElementById("smoke-toggle-btn").textContent = open ? "🧪 Smoke Test" : "✕ Smoke Test";
+  // Add a first empty row when opening for the first time
+  if (!open && !document.querySelector(".smoke-env-row")) addEnvRow();
+}
+
+function addEnvRow(key = "", val = "") {
+  const env = document.getElementById("smoke-env");
+  const row = document.createElement("div");
+  row.className = "smoke-env-row";
+  row.innerHTML =
+    `<input type="text" placeholder="ENV_VAR_NAME" value="${esc(key)}">` +
+    `<input type="password" placeholder="value (hidden)" value="${esc(val)}">` +
+    `<button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  env.appendChild(row);
+  row.querySelector("input").focus();
+}
+
+function _getEnvVars() {
+  const vars = {};
+  document.querySelectorAll(".smoke-env-row").forEach(row => {
+    const [k, v] = [...row.querySelectorAll("input")];
+    if (k.value.trim() && v.value.trim()) vars[k.value.trim()] = v.value.trim();
+  });
+  return vars;
+}
+
+function _appendSmokeOut(text, type) {
+  const area = document.getElementById("smoke-out");
+  area.style.display = "flex";
+  const el = document.createElement("div");
+  el.className = "smoke-line-" + (type || "output");
+  el.textContent = text;
+  area.appendChild(el);
+  area.scrollTop = area.scrollHeight;
+}
+
+function handleSmokeEvent(ev) {
+  switch (ev.event) {
+    case "smoke_stage":  _appendSmokeOut(ev.message, "stage"); break;
+    case "smoke_step":   _appendSmokeOut("✓ " + ev.message, "step"); break;
+    case "smoke_warn":   _appendSmokeOut("⚠ " + ev.message, "warn"); break;
+    case "smoke_error":  _appendSmokeOut("✕ " + ev.message, "err"); break;
+    case "smoke_output": _appendSmokeOut(ev.line, "output"); break;
+    case "smoke_reply":
+      _appendSmokeOut("", "output");
+      _appendSmokeOut("Agent replied:", "stage");
+      _appendSmokeOut(ev.text || "(empty)", "reply");
+      break;
+    case "smoke_done":
+      _appendSmokeOut(
+        ev.ok ? "\n✓ Smoke test passed." : "\n✕ Smoke test failed.",
+        ev.ok ? "ok" : "err"
+      );
+      break;
+  }
+}
+
+async function runSmokeTest() {
+  if (!currentJobId) {
+    _appendSmokeOut("No active job — re-run generation first.", "err"); return;
+  }
+
+  const btn = document.getElementById("smoke-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Testing…';
+
+  document.getElementById("smoke-out").innerHTML = "";
+  document.getElementById("smoke-out").style.display = "flex";
+
+  // Show launch commands
+  const proj = document.getElementById("project-name").value.trim() || "my-adk-agent";
+  document.getElementById("smoke-launch-cmds").textContent =
+    `cd ${proj}/\npip install -r requirements.txt\nadk web`;
+  document.getElementById("smoke-launch").style.display = "block";
+
+  try {
+    const res = await fetch(`/smoketest/${currentJobId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ env: _getEnvVars() }),
+    });
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split("\n\n"); buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try { handleSmokeEvent(JSON.parse(line.slice(6))); } catch {}
+      }
+    }
+  } catch (e) {
+    _appendSmokeOut("Request failed: " + e.message, "err");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "🧪 Run Smoke Test";
+  }
+}
+
+function copyLaunchCmds() {
+  const text = document.getElementById("smoke-launch-cmds").textContent;
+  navigator.clipboard.writeText(text).catch(() => {});
+  const btn = event.target;
+  btn.textContent = "Copied!";
+  setTimeout(() => btn.textContent = "Copy", 1500);
+}
+
+// ── Session persistence & resume ─────────────────────────────────────────────
+const SESSION_KEY = "skill_adk_session";
+
+function _readSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
+}
+
+function _writeSession(patch) {
+  const cur = _readSession() || {};
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ ...cur, ...patch }));
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById("resume-banner").style.display = "none";
+}
+
+function saveCheckpointAdr() {
+  const sid = _readSession()?.sessionId || crypto.randomUUID();
+  _writeSession({
+    sessionId:    sid,
+    phase:        "adr",
+    projectName:  document.getElementById("project-name").value.trim() || "my-adk-agent",
+    parsedSkills: parsedSkills,
+    currentAdr:   currentAdr,
+  });
+}
+
+function saveCheckpointGenerated() {
+  // Sync: update localStorage phase immediately
+  _writeSession({ phase: "generated" });
+  // Async: persist files to server (fire-and-forget, non-blocking)
+  const sid = _readSession()?.sessionId;
+  if (!sid || !Object.keys(generatedFiles).length) return;
+  const projectName = document.getElementById("project-name").value.trim() || "my-adk-agent";
+  fetch(`/session/${sid}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      meta:  { projectName, phase: "generated" },
+      files: generatedFiles,
+    }),
+  }).catch(() => {});  // silent fail — localStorage still works as fallback
+}
+
+async function resumeSession() {
+  const state = _readSession();
+  if (!state) return;
+
+  document.getElementById("resume-banner").style.display = "none";
+
+  // Restore core state
+  parsedSkills = state.parsedSkills || [];
+  currentAdr   = state.currentAdr   || null;
+  const projectName = state.projectName || "my-adk-agent";
+  document.getElementById("project-name").value = projectName;
+
+  // Always restore ADR panel
+  if (currentAdr) {
+    document.getElementById("adr-empty").style.display = "none";
+    document.getElementById("adr-wrap").style.display  = "flex";
+    renderAdr(currentAdr);
+    resetAdrChat();
+    document.getElementById("approve-btn").disabled = false;
+    document.querySelectorAll(".pipe-label").forEach(b => b.classList.remove("active","done","error"));
+    setPipe("parse","done"); setPipe("architect","done"); setPipe("review","active");
+  }
+
+  // If files were generated, try to fetch them from the server
+  if (state.phase === "generated" && state.sessionId) {
+    try {
+      const res = await fetch(`/session/${state.sessionId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const files = data.files || {};
+        if (Object.keys(files).length) {
+          document.getElementById("file-tabs").innerHTML = "";
+          generatedFiles = {};
+          Object.entries(files).forEach(([name, content]) => _upsertFile(name, content));
+          selectFile(Object.keys(generatedFiles)[0]);
+          setPipe("generate","done"); setPipe("validate","done"); setPipe("tests","done");
+          setPipe("verify","done"); setPipe("hitl","done"); setPipe("package","done");
+          switchTabById("files");
+          addLog(`↩ Resumed session — ${Object.keys(generatedFiles).length} files restored`, "success");
+          return;
+        }
+      }
+    } catch {}
+    // Server session gone (e.g. server restarted) — restore ADR only
+    addLog("↩ Resumed ADR — server session expired, re-run generation to get files.", "warning");
+  }
+
+  switchTabById("adr");
+  addLog(`↩ Resumed from ADR Review — approve when ready.`, "success");
+}
+
+function dismissResume() {
+  document.getElementById("resume-banner").style.display = "none";
+}
+
+function checkForResume() {
+  const state = _readSession();
+  if (!state?.phase || !state?.currentAdr) return;
+  const phaseLabel = state.phase === "generated"
+    ? `Code generated · project: ${state.projectName || "?"}`
+    : `ADR ready · project: ${state.projectName || "?"}`;
+  document.getElementById("resume-msg").textContent =
+    state.phase === "generated" ? "Previous session: code ready to resume" : "Previous session: ADR ready to resume";
+  document.getElementById("resume-sub").textContent = phaseLabel;
+  document.getElementById("resume-banner").style.display = "flex";
+}
+
+// ── Init
+addSkillCard();
+checkForResume();
+</script>
+</body>
+</html>

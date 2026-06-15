@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# ChromaDB vector index (rebuild from adk_docs.txt — see README)
+adk_chroma_db/
+
+# ADK docs (3MB — download from https://google.github.io/adk-docs/llms-full.txt)
+adk_docs.txt
+
+# Environment / secrets
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flask
+instance/
+
+# Temp job outputs (in-memory jobs write here, cleared on restart)
+/tmp/
+
+# Session files (user-generated, transient)
+sessions/*/
+
+# Claude Code local settings
+.claude/

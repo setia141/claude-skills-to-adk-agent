@@ -1,0 +1,110 @@
+<svg width="680" height="920" viewBox="0 0 680 920" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Skill to Google ADK Platform Architecture</title>
+<desc>Two-phase architecture: offline RAG index build, then a 7-stage pipeline from SKILL.md input to downloadable ADK project zip</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<style>
+  text { font-family: system-ui, sans-serif; }
+  .th  { font-size:14px; font-weight:500; fill:#1a1a1a; }
+  .ts  { font-size:12px; font-weight:400; fill:#555; }
+  .arr { stroke:#999; stroke-width:1.5; fill:none; }
+  .c-gray   rect { fill:#f1efe8; stroke:#888780; }  .c-gray   text { fill:#444441; }
+  .c-teal   rect { fill:#e1f5ee; stroke:#0f6e56; }  .c-teal   text { fill:#085041; }
+  .c-purple rect { fill:#eeedfe; stroke:#534ab7; }  .c-purple text { fill:#3c3489; }
+  .c-amber  rect { fill:#faeeda; stroke:#854f0b; }  .c-amber  text { fill:#633806; }
+  .c-blue   rect { fill:#e6f1fb; stroke:#185fa5; }  .c-blue   text { fill:#0c447c; }
+  .c-coral  rect { fill:#faece7; stroke:#993c1d; }  .c-coral  text { fill:#712b13; }
+  .c-green  rect { fill:#eaf3de; stroke:#3b6d11; }  .c-green  text { fill:#27500a; }
+</style>
+</defs>
+
+<!-- Phase 1 container -->
+<rect x="40" y="20" width="600" height="120" rx="10" fill="none" stroke="#bbb" stroke-width="0.5" stroke-dasharray="6 4"/>
+<text class="ts" x="58" y="40" fill="#999">offline setup — runs once</text>
+
+<g class="c-gray"><rect x="60" y="52" width="140" height="72" rx="6" stroke-width="0.5"/>
+<text class="th" x="130" y="82" text-anchor="middle" dominant-baseline="central">adk_docs.txt</text>
+<text class="ts" x="130" y="102" text-anchor="middle" dominant-baseline="central">938k tokens</text></g>
+
+<line x1="200" y1="88" x2="228" y2="88" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<g class="c-teal"><rect x="230" y="52" width="130" height="72" rx="6" stroke-width="0.5"/>
+<text class="th" x="295" y="78" text-anchor="middle" dominant-baseline="central">Chunker</text>
+<text class="ts" x="295" y="98" text-anchor="middle" dominant-baseline="central">~500 tok · overlap</text></g>
+
+<line x1="360" y1="88" x2="388" y2="88" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<g class="c-purple"><rect x="390" y="52" width="140" height="72" rx="6" stroke-width="0.5"/>
+<text class="th" x="460" y="74" text-anchor="middle" dominant-baseline="central">Embeddings</text>
+<text class="ts" x="460" y="92" text-anchor="middle" dominant-baseline="central">text-embedding</text>
+<text class="ts" x="460" y="108" text-anchor="middle" dominant-baseline="central">-3-small</text></g>
+
+<line x1="530" y1="88" x2="556" y2="88" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<g class="c-blue"><rect x="558" y="52" width="66" height="72" rx="6" stroke-width="0.5"/>
+<text class="th" x="591" y="78" text-anchor="middle" dominant-baseline="central">Chroma</text>
+<text class="ts" x="591" y="96" text-anchor="middle" dominant-baseline="central">DB</text>
+<text class="ts" x="591" y="112" text-anchor="middle" dominant-baseline="central">persisted</text></g>
+
+<!-- Input -->
+<g class="c-gray"><rect x="220" y="175" width="240" height="44" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="197" text-anchor="middle" dominant-baseline="central">SKILL.md × N</text></g>
+<line x1="340" y1="219" x2="340" y2="242" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<!-- Stage 1 -->
+<g class="c-teal"><rect x="180" y="244" width="320" height="56" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="266" text-anchor="middle" dominant-baseline="central">1 · Parser</text>
+<text class="ts" x="340" y="285" text-anchor="middle" dominant-baseline="central">claude-agent-sdk · SKILL.md → structured JSON</text></g>
+<line x1="340" y1="300" x2="340" y2="323" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<!-- Stage 2 -->
+<g class="c-purple"><rect x="180" y="325" width="320" height="56" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="347" text-anchor="middle" dominant-baseline="central">2 · Architect Agent</text>
+<text class="ts" x="340" y="366" text-anchor="middle" dominant-baseline="central">claude-agent-sdk · reasons → produces ADR</text></g>
+<line x1="340" y1="381" x2="340" y2="404" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<!-- Stage 3 -->
+<g class="c-amber"><rect x="180" y="406" width="320" height="56" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="428" text-anchor="middle" dominant-baseline="central">3 · ADR Review</text>
+<text class="ts" x="340" y="447" text-anchor="middle" dominant-baseline="central">user reads · edits · approves in Flask UI</text></g>
+<line x1="340" y1="462" x2="340" y2="485" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<!-- Stage 4 -->
+<g class="c-blue"><rect x="180" y="487" width="320" height="56" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="509" text-anchor="middle" dominant-baseline="central">4 · RAG Retrieval</text>
+<text class="ts" x="340" y="528" text-anchor="middle" dominant-baseline="central">ADR decisions → queries → top-k doc chunks</text></g>
+
+<!-- ChromaDB connection -->
+<path d="M591 124 L591 515 L502 515" fill="none" stroke="#bbb" stroke-width="0.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+<text class="ts" x="612" y="328" text-anchor="middle" fill="#999">cosine</text>
+<text class="ts" x="612" y="343" text-anchor="middle" fill="#999">search</text>
+
+<line x1="340" y1="543" x2="340" y2="566" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<!-- Stage 5 -->
+<g class="c-purple"><rect x="180" y="568" width="320" height="68" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="591" text-anchor="middle" dominant-baseline="central">5 · Generator</text>
+<text class="ts" x="340" y="610" text-anchor="middle" dominant-baseline="central">claude-agent-sdk</text>
+<text class="ts" x="340" y="627" text-anchor="middle" dominant-baseline="central">ADR + ADK docs → tools.py + agent.py</text></g>
+<line x1="340" y1="636" x2="340" y2="659" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<!-- Stage 6 -->
+<g class="c-coral"><rect x="180" y="661" width="320" height="56" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="683" text-anchor="middle" dominant-baseline="central">6 · Validator</text>
+<text class="ts" x="340" y="702" text-anchor="middle" dominant-baseline="central">claude-agent-sdk · code vs ADR conformance</text></g>
+<line x1="340" y1="717" x2="340" y2="740" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<!-- Stage 7 -->
+<g class="c-teal"><rect x="180" y="742" width="320" height="56" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="764" text-anchor="middle" dominant-baseline="central">7 · Test Generator</text>
+<text class="ts" x="340" y="783" text-anchor="middle" dominant-baseline="central">claude-agent-sdk · ADR error-strategy aware</text></g>
+<line x1="340" y1="798" x2="340" y2="821" stroke="#999" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+<!-- Output -->
+<g class="c-green"><rect x="180" y="823" width="320" height="68" rx="6" stroke-width="0.5"/>
+<text class="th" x="340" y="846" text-anchor="middle" dominant-baseline="central">ADK Project · zip download</text>
+<text class="ts" x="340" y="864" text-anchor="middle" dominant-baseline="central">tools.py · agent.py · tests/ · adr.json</text>
+<text class="ts" x="340" y="880" text-anchor="middle" dominant-baseline="central">requirements.txt · README.md</text></g>
+</svg>
