@@ -123,7 +123,7 @@ def ask_json(system: str, user: str, tag: str = "") -> Any:
 
 def strip_fences(text: str) -> str:
     """Strip leading/trailing markdown code fences from a string."""
-    return re.sub(r"^```[\w]*\s*|\s*```$", "", text.strip())
+    return re.sub(r"(^```[\w]*\s*)|(\s*```$)", "", text.strip())
 
 
 def parse_file_blocks(text: str) -> dict[str, str]:

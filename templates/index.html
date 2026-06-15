@@ -236,7 +236,7 @@ select option:disabled{color:var(--muted)}
 .smoke-env-row{display:flex;gap:6px;align-items:center}
 .smoke-env-row input[type=text]{width:160px;flex-shrink:0}
 .smoke-env-row input[type=password]{flex:1}
-.smoke-out{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 10px;max-height:180px;overflow-y:auto;font-family:'JetBrains Mono','Fira Code',monospace;font-size:10px;line-height:1.8;display:flex;flex-direction:column;gap:1px;display:none}
+.smoke-out{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 10px;max-height:180px;overflow-y:auto;font-family:'JetBrains Mono','Fira Code',monospace;font-size:10px;line-height:1.8;flex-direction:column;gap:1px;display:none}
 .smoke-line-output{color:var(--muted)}
 .smoke-line-stage{color:var(--blue);font-weight:600;margin-top:3px}
 .smoke-line-ok,.smoke-line-step{color:var(--green)}
@@ -796,7 +796,7 @@ function toggleSection(id) {
   const open = body.style.display !== 'none';
   body.style.display = open ? 'none' : 'flex';
   icon.textContent = open ? '▼' : '▲';
-  icon.style.transform = open ? '' : '';
+  icon.style.transform = '';
 }
 
 // ── ADR Edit toggle ───────────────────────────────────────────────────────
@@ -1253,7 +1253,7 @@ function autoDetectFile() {
     const hit  = known.find(f => f.split("/").pop() === base);
     if (hit) { det.textContent = "Detected: " + hit; return; }
   }
-  det.textContent = known.length ? "" : "";
+  det.textContent = "";
 }
 
 async function runFix() {
