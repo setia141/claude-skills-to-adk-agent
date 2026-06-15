@@ -20,6 +20,7 @@ import sys
 import tempfile
 import threading
 import uuid
+import venv as _venv_mod
 import zipfile
 from pathlib import Path
 
@@ -895,17 +896,33 @@ def run_stream(job_id):
     python  = sys.executable
 
     def stream():
+        # ── Step 0: Create isolated sandbox venv ─────────────────────────────
+        # pip install runs inside this venv so the Flask app's packages are
+        # never touched and the reloader never sees venv changes.
+        sandbox_dir    = out_dir / "_venv"
+        sandbox_python = python  # fallback if venv creation fails
+        yield sse("run_output", {"line": "Creating isolated sandbox environment…"})
+        try:
+            _venv_mod.EnvBuilder(with_pip=True, clear=True).create(str(sandbox_dir))
+            _bin = "Scripts" if sys.platform == "win32" else "bin"
+            _exe = "python.exe" if sys.platform == "win32" else "python"
+            sandbox_python = str(sandbox_dir / _bin / _exe)
+            job["sandbox_python"] = sandbox_python
+            yield sse("run_output", {"line": "  ✓ Sandbox venv ready"})
+        except Exception as e:
+            yield sse("run_output", {"line": f"  ! Sandbox venv failed: {e} — using app venv"})
+
         # ── Step 1: pip install ───────────────────────────────────────────────
         yield sse("run_stage", {"name": "install", "message": "Step 1: Installing dependencies…"})
         req_file = out_dir / "requirements.txt"
         if req_file.exists():
             approved = yield from _cmd_helper(
                 job_id, "pip install -r requirements.txt",
-                reason="Install the generated agent's Python dependencies",
+                reason="Install the generated agent's Python dependencies (into isolated sandbox venv)",
             )
             if approved:
                 rc, _ = yield from _run_subprocess(
-                    [python, "-m", "pip", "install", "-r", "requirements.txt"],
+                    [sandbox_python, "-m", "pip", "install", "-r", "requirements.txt"],
                     cwd=out_dir,
                 )
                 if rc == 0:
@@ -990,7 +1007,7 @@ def run_stream(job_id):
         if approved:
             for attempt in range(3):
                 rc, out = yield from _run_subprocess(
-                    [python, "-c", import_cmd], cwd=out_dir,
+                    [sandbox_python, "-c", import_cmd], cwd=out_dir,
                 )
                 if rc == 0:
                     import_ok = True
@@ -1067,9 +1084,10 @@ def smoketest_stream(job_id):
         env = {**os.environ, **env_in}
         yield sse("smoke_stage", {"message": "Running smoke test…"})
 
+        smoke_python = job.get("sandbox_python", sys.executable)
         try:
             proc = subprocess.Popen(
-                [sys.executable, "-u", str(script_path)],
+                [smoke_python, "-u", str(script_path)],
                 cwd=str(out_dir),
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 text=True, bufsize=1, env=env,
@@ -1191,5 +1209,6 @@ def cleanup_route(job_id):
 if __name__ == "__main__":
     app.run(debug=True, port=5000, threaded=True,
             extra_files=[],
+            reloader_type="stat",
             exclude_patterns=["venv/*", "__pycache__/*",
                               "adk_chroma_db/*", "sessions/*", "output/*"])

@@ -33,15 +33,17 @@ def load_prompt(name: str) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-async def _ask_async(system: str, user: str, max_tokens: int = 8192) -> str:
+async def _ask_async(system: str, user: str, max_turns: int = 3) -> str:
     """
     Async core: run one query() call, collect all AssistantMessage TextBlocks.
     allowed_tools=[] ensures Claude does not try to use filesystem/bash tools —
     we only want a text response, not agentic tool use.
+    max_turns=3 (not 1) gives the SDK room to handle any tool-rejection
+    handshake internally without raising "Reached maximum number of turns".
     """
     options = ClaudeAgentOptions(
         system_prompt=system,
-        max_turns=1,
+        max_turns=max_turns,
         allowed_tools=[],          # text-only — no tool execution
         disallowed_tools=["Bash", "Read", "Write", "Edit", "Glob"],
     )
@@ -54,7 +56,7 @@ async def _ask_async(system: str, user: str, max_tokens: int = 8192) -> str:
     return full_text
 
 
-def ask(system: str, user: str, tag: str = "") -> str:
+def ask(system: str, user: str, tag: str = "", max_turns: int = 3) -> str:
     """
     Synchronous wrapper around _ask_async.
     Safe to call from Flask route handlers (which are sync).
@@ -62,7 +64,7 @@ def ask(system: str, user: str, tag: str = "") -> str:
     """
     if tag:
         log.info(f"[{tag}] → Claude Agent SDK")
-    result = anyio.run(_ask_async, system, user)
+    result = anyio.run(_ask_async, system, user, max_turns)
     if tag:
         log.info(f"[{tag}] ← {len(result)} chars")
     return result
