@@ -960,8 +960,8 @@ def run_stream(job_id):
                 yield sse("run_output", {"line": f"  ✓ {fname}"})
 
         if not syntax_ok:
-            for attempt in range(3):
-                yield sse("run_output", {"line": f"  Auto-fix attempt {attempt + 1}/3…"})
+            for attempt in range(7):
+                yield sse("run_output", {"line": f"  Auto-fix attempt {attempt + 1}/7…"})
                 content = (out_dir / syntax_file).read_text(encoding="utf-8", errors="replace")
                 try:
                     fixed = run_fixer(content, syntax_file, syntax_error, adr)
@@ -1008,7 +1008,7 @@ def run_stream(job_id):
         )
         import_ok = False
         if approved:
-            for attempt in range(3):
+            for attempt in range(7):
                 rc, out = yield from _run_subprocess(
                     [sandbox_python, "-c", import_cmd], cwd=out_dir,
                 )
@@ -1017,8 +1017,8 @@ def run_stream(job_id):
                     yield sse("run_step_ok", {"name": "import", "message": "Import test passed"})
                     break
 
-                yield sse("run_output", {"line": f"  Import failed (attempt {attempt + 1}/3)"})
-                if attempt >= 2:
+                yield sse("run_output", {"line": f"  Import failed (attempt {attempt + 1}/7)"})
+                if attempt >= 6:
                     break
 
                 fname = _detect_filename(out, list(job["files"].keys()))
@@ -1040,7 +1040,7 @@ def run_stream(job_id):
                 yield sse("file", {"filename": fname, "content": fixed})
 
             if not import_ok:
-                yield sse("run_step_error", {"name": "import", "message": "Import test failed after 3 attempts"})
+                yield sse("run_step_error", {"name": "import", "message": "Import test failed after 7 attempts"})
         else:
             yield sse("run_step_warn", {"name": "import", "message": "Import test skipped"})
             import_ok = True
