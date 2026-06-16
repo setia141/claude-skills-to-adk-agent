@@ -16,6 +16,13 @@ If a skill step describes logic that could be bash (git commands, file ops, CLI 
   - Implement it directly in Python using subprocess.run(), pathlib, shutil, etc.
   - Never emit shell=True
 
+## CRITICAL — ADK import paths (never confuse these)
+```
+from google.adk.tools import tool        ← @tool decorator (tools.py)
+from google.adk.agents import Agent      ← Agent class (agent.py)
+```
+`tool` is NEVER imported from `google.adk.agents` — that raises ImportError.
+
 ## tools.py rules
 - from google.adk.tools import tool
 - ToolResult = TypedDict("ToolResult", {"status": str, "output": Any, "error": str | None}) at top
