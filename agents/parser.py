@@ -13,7 +13,7 @@ Code is never embedded inside JSON — eliminates all JSON escaping failures.
 import logging
 import os
 import re
-from agents.claude_sdk import ask, load_prompt, parse_file_blocks, parse_json_block
+from agents.claude_sdk import ask, load_prompt, parse_file_blocks, parse_json_block, MODEL_MEDIUM
 
 log = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ def parse_skill(skill_text: str, extra_files: dict[str, str] | None = None) -> d
     extra = extra_files or {}
 
     full_text = _resolve_skill_bundle(skill_text, extra)
-    raw = ask(PARSE_SYSTEM, f"Parse this skill:\n\n{full_text}", tag="parse_skill")
+    raw = ask(PARSE_SYSTEM, f"Parse this skill:\n\n{full_text}", tag="parse_skill", model=MODEL_MEDIUM)
 
     # Extract metadata from <json> block (no code fields inside)
     try:

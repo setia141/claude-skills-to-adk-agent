@@ -10,7 +10,7 @@ Does NOT regenerate the whole pipeline — only patches the specific broken file
 
 import json
 import logging
-from agents.claude_sdk import ask, load_prompt, strip_fences
+from agents.claude_sdk import ask, load_prompt, strip_fences, MODEL_LIGHT
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def run_fixer(file_content: str, filename: str, error_text: str, adr: dict) -> s
         f"{json.dumps(adr, indent=2)}"
     )
 
-    raw = ask(FIXER_SYSTEM, user, tag="fixer")
+    raw = ask(FIXER_SYSTEM, user, tag="fixer", model=MODEL_LIGHT)
     fixed = strip_fences(raw)
 
     log.info(f"[fixer] {filename} fixed — {len(fixed)} chars")

@@ -482,6 +482,7 @@ def parse_route():
                 for skill_text, extra_files in skills:
                     parsed.append(parse_skill(skill_text, extra_files))
             except Exception as e:
+                log.exception(f"parse_skill failed for zip {zf.filename}")
                 errors.append(f"{zf.filename}: {e}")
 
         for text in text_skills:
@@ -489,6 +490,7 @@ def parse_route():
                 try:
                     parsed.append(parse_skill(text))
                 except Exception as e:
+                    log.exception("parse_skill failed for text skill")
                     errors.append(str(e))
     else:
         # JSON path (backward compat)

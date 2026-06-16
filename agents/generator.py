@@ -5,7 +5,7 @@ Uses Claude Agent SDK + RAG-retrieved ADK doc context.
 
 import json
 import logging
-from agents.claude_sdk import ask, ask_json, strip_fences, load_prompt, parse_file_blocks, parse_json_block
+from agents.claude_sdk import ask, ask_json, strip_fences, load_prompt, parse_file_blocks, parse_json_block, MODEL_LIGHT
 from agents.rag import retrieve_for_queries
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ def _plan_retrieval_queries(adr: dict) -> list[str]:
         f"{json.dumps(adr, indent=2)}"
     )
     try:
-        queries = ask_json(_QUERY_PLANNER_SYS, user, tag="query_planner")
+        queries = ask_json(_QUERY_PLANNER_SYS, user, tag="query_planner", model=MODEL_LIGHT)
         if isinstance(queries, list) and queries and all(isinstance(q, str) for q in queries):
             log.info(f"[generator] Claude planned {len(queries)} queries: {queries}")
             return queries
@@ -154,7 +154,7 @@ def run_validator(tools_py: str, agent_py: str, adr: dict) -> dict:
         f"## agent.py\n{agent_py}\n\n"
         f"## ADR\n{json.dumps(adr, indent=2)}"
     )
-    raw = ask(_VALIDATOR_SYS, user, tag="validator")
+    raw = ask(_VALIDATOR_SYS, user, tag="validator", model=MODEL_LIGHT)
 
     # Parse <json> block for structured metadata
     try:
@@ -190,5 +190,5 @@ def run_test_generator(tools_py: str, adr: dict, skill_names: str) -> str:
         f"## ADR hitl_points\n{json.dumps(adr['decisions'].get('hitl_points', []), indent=2)}\n\n"
         f"## tools.py\n{tools_py}"
     )
-    raw = ask(_TEST_SYS, user, tag="test_gen")
+    raw = ask(_TEST_SYS, user, tag="test_gen", model=MODEL_LIGHT)
     return strip_fences(raw)
