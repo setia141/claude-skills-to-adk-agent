@@ -33,6 +33,9 @@ def load_prompt(name: str) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
+_SDK_TIMEOUT = 1800  # 30 minutes — safety net for genuine hangs only
+
+
 async def _ask_async(system: str, user: str, max_turns: int = 3) -> str:
     """
     Async core: run one query() call, collect all AssistantMessage TextBlocks.
@@ -40,6 +43,7 @@ async def _ask_async(system: str, user: str, max_turns: int = 3) -> str:
     we only want a text response, not agentic tool use.
     max_turns=3 (not 1) gives the SDK room to handle any tool-rejection
     handshake internally without raising "Reached maximum number of turns".
+    Times out after 30 minutes to prevent infinite hangs on a dead claude process.
     """
     options = ClaudeAgentOptions(
         system_prompt=system,
@@ -48,11 +52,12 @@ async def _ask_async(system: str, user: str, max_turns: int = 3) -> str:
         disallowed_tools=["Bash", "Read", "Write", "Edit", "Glob"],
     )
     full_text = ""
-    async for message in query(prompt=user, options=options):
-        if isinstance(message, AssistantMessage):
-            for block in message.content:
-                if isinstance(block, TextBlock):
-                    full_text += block.text
+    with anyio.fail_after(_SDK_TIMEOUT):
+        async for message in query(prompt=user, options=options):
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        full_text += block.text
     return full_text
 
 
@@ -61,10 +66,15 @@ def ask(system: str, user: str, tag: str = "", max_turns: int = 3) -> str:
     Synchronous wrapper around _ask_async.
     Safe to call from Flask route handlers (which are sync).
     Uses anyio.run() to drive the async event loop.
+    Raises TimeoutError if Claude does not respond within 30 minutes.
     """
     if tag:
         log.info(f"[{tag}] → Claude Agent SDK")
-    result = anyio.run(_ask_async, system, user, max_turns)
+    try:
+        result = anyio.run(_ask_async, system, user, max_turns)
+    except TimeoutError:
+        log.error(f"[{tag}] Claude SDK timed out after {_SDK_TIMEOUT // 60} minutes — claude process may be hung")
+        raise
     if tag:
         log.info(f"[{tag}] ← {len(result)} chars")
     return result
