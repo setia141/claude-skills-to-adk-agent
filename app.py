@@ -413,7 +413,7 @@ def _run_subprocess(cmd: list, cwd: Path):
         proc = subprocess.Popen(
             cmd, cwd=str(cwd),
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1,
+            text=True, encoding="utf-8", bufsize=1,
         )
         for raw in proc.stdout:
             line = raw.rstrip()
